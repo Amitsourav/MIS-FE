@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MIS — Lead Provider Portal (Frontend)
 
-## Getting Started
+Next.js 14 frontend for the MIS portal. External **lead providers** sign in to see how
+the leads they supplied perform across two CRMs (**FundMyCampus** `fmc` + **Admitverse** `av`),
+and an **internal admin** area manages providers, maps CRM sources, sets targets, and runs syncs.
 
-First, run the development server:
+It talks **only** to the MIS FastAPI backend, through a same-origin BFF proxy.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture
+
+```
+Browser (Axios → /api/*)  ─┐
+                           ├─►  Next.js route handlers  ─►  FastAPI backend
+httpOnly cookie mis_token ─┘     (read cookie, add        (Bearer JWT auth,
+                                  Authorization: Bearer)    provider-scoped)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- The JWT lives in an **httpOnly, Secure, SameSite=Lax** cookie (`mis_token`) — never in
+  `localStorage`, never readable from JS. A non-sensitive `mis_role` cookie powers middleware/UI.
+- All client calls hit the same-origin proxy at `/api/*`; the proxy injects the Bearer and
+  streams responses back (including CSV downloads). On a backend `401` it clears cookies so the
+  client bounces to `/login`.
+- The client **never** sends `provider_id` — the backend derives scope from the JWT. The UI only
+  sends filters (brand, date range, stage, search, paging).
+- `middleware.ts` gatekeeps routes by cookie + role; the proxy and backend remain the real authority.
+- No hard-coded thresholds: targets/grades/bands come from the backend; the UI only formats them.
+- **Admins are company-scoped.** Login/`me` return a `brand`: `null` = super-admin (sees both
+  companies + the `/admin/admins` management screen + a FMC/AV/Both switcher), `"fmc"`/`"av"` =
+  company admin locked to one company. A readable `mis_brand` cookie powers middleware/UI scoping;
+  the frontend never sends `brand` to scope data — the token does. Providers belong to one company too.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js 14 (App Router) · TypeScript (strict) · Tailwind CSS · shadcn/ui-style primitives ·
+TanStack Query · Axios · Recharts · lucide-react · date-fns · react-hook-form + zod · sonner.
 
-## Learn More
+## Getting started
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cp .env.example .env.local       # set API_URL to your backend
+npm install
+npm run dev                      # http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Environment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Var       | Scope        | Purpose                                                        |
+|-----------|--------------|----------------------------------------------------------------|
+| `API_URL` | server-only  | FastAPI backend origin. **Not** `NEXT_PUBLIC` — stays private. |
 
-## Deploy on Vercel
+On Vercel set `API_URL` to the deployed backend URL. Cookies are marked `Secure` automatically
+in production (`NODE_ENV=production`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `app/(portal)/` — provider area: `dashboard`, `leads`, `payout` (Phase 2 placeholder).
+- `app/(admin)/admin/` — `providers`, `providers/[id]`, `leaderboard`, `targets`, `sync`,
+  `admins` (super-admin only).
+- `app/api/` — BFF: `auth/login`, `auth/logout`, `[...path]` catch-all proxy (server-only).
+- `lib/` — `types.ts` (mirrors backend 1:1), `api.ts`, `queries.ts`, `filters.ts`, `format.ts`,
+  `tokens.ts` (stage/grade colors).
+- `components/` — `ui/` primitives, `shell/`, `charts/`, plus KPI/badge/table/scorecard pieces.
+
+## Scripts
+
+- `npm run dev` — dev server
+- `npm run build` — production build
+- `npm run start` — serve the production build
+- `npm run lint` — ESLint
