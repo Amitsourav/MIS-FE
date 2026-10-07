@@ -24,6 +24,7 @@ import { BrandChip } from "@/components/stage-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PayoutsPanel } from "@/components/payouts/payouts-panel";
 import { EmptyState } from "@/components/empty-state";
+import { QueryError } from "@/components/query-error";
 import { toast } from "@/components/ui/sonner";
 import {
   Dialog,
@@ -47,7 +48,8 @@ import type { Brand, PayoutFilters, ProviderUserCreated } from "@/lib/types";
 export default function ProviderDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { data: provider, isLoading } = useProvider(id);
+  const providerQuery = useProvider(id);
+  const { data: provider, isLoading } = providerQuery;
 
   return (
     <div className="space-y-6">
@@ -68,7 +70,9 @@ export default function ProviderDetailPage() {
         </div>
       </div>
 
-      {!isLoading && !provider ? (
+      {providerQuery.isError && !provider ? (
+        <QueryError error={providerQuery.error} onRetry={() => void providerQuery.refetch()} />
+      ) : !isLoading && !provider ? (
         <EmptyState title="Provider not found" description="It may have been removed." />
       ) : (
         // Inactive tab content unmounts, so payouts are only fetched while that tab is open.
@@ -280,9 +284,11 @@ function LoginsCard({ id }: { id: string }) {
 }
 
 function SourcesCard({ id }: { id: string }) {
-  const { data: mappings, isLoading: loadingMappings } = useProviderSources(id);
+  const mappingsQuery = useProviderSources(id);
+  const { data: mappings, isLoading: loadingMappings } = mappingsQuery;
   const [brand, setBrand] = useState<Brand | "">("");
-  const { data: crmSources, isLoading: loadingCrm } = useCrmSources(brand);
+  const crmQuery = useCrmSources(brand);
+  const { data: crmSources, isLoading: loadingCrm } = crmQuery;
   const mapSource = useMapSource(id);
 
   function map(crmSourceId: string, sourceName: string | null) {
@@ -312,7 +318,13 @@ function SourcesCard({ id }: { id: string }) {
         {/* Current mappings */}
         <div>
           <p className="mb-2 text-sm font-medium">Current mappings</p>
-          {loadingMappings ? (
+          {mappingsQuery.isError && !mappings ? (
+            <QueryError
+              className="py-6"
+              error={mappingsQuery.error}
+              onRetry={() => void mappingsQuery.refetch()}
+            />
+          ) : loadingMappings ? (
             <Skeleton className="h-10 w-full" />
           ) : (mappings?.length ?? 0) === 0 ? (
             <p className="text-sm text-muted-foreground">No sources mapped yet.</p>
@@ -348,7 +360,13 @@ function SourcesCard({ id }: { id: string }) {
 
           {brand && (
             <div className="rounded-md border">
-              {loadingCrm ? (
+              {crmQuery.isError && !crmSources ? (
+                <QueryError
+                  className="border-0 py-6"
+                  error={crmQuery.error}
+                  onRetry={() => void crmQuery.refetch()}
+                />
+              ) : loadingCrm ? (
                 <div className="space-y-2 p-3">
                   <Skeleton className="h-8 w-full" />
                   <Skeleton className="h-8 w-full" />

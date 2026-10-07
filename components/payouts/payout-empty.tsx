@@ -1,4 +1,4 @@
-import { AlertCircle, Building2, Wallet } from "lucide-react";
+import { Building2, Wallet } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -24,20 +24,6 @@ export function PayoutsNone({ onShowAllTime }: { onShowAllTime?: () => void }) {
           Show all time
         </Button>
       )}
-    </EmptyState>
-  );
-}
-
-export function PayoutsError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <EmptyState
-      icon={<AlertCircle className="h-5 w-5 text-destructive" />}
-      title="Couldn't load payouts"
-      description={message}
-    >
-      <Button variant="outline" size="sm" onClick={onRetry}>
-        Retry
-      </Button>
     </EmptyState>
   );
 }

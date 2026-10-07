@@ -25,8 +25,17 @@ api.interceptors.response.use(
   },
 );
 
+export const UNAVAILABLE_MESSAGE = "Data source temporarily unavailable, please retry.";
+
+/** True when a CRM the backend reads live is temporarily unreachable (503). */
+export function isUnavailable(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response?.status === 503;
+}
+
 /** Pull a human-readable message out of an Axios error. */
 export function errorMessage(err: unknown, fallback = "Something went wrong"): string {
+  // 503 = a CRM is briefly down; its detail ("The fmc CRM is unavailable…") is too technical.
+  if (isUnavailable(err)) return UNAVAILABLE_MESSAGE;
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as { detail?: string | { msg?: string }[] } | undefined;
     if (typeof data?.detail === "string") return data.detail;

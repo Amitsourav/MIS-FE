@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Trophy, Target, RefreshCw, BarChart3, ShieldCheck } from "lucide-react";
+import { Users, Trophy, Target, BarChart3, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/lib/queries";
 import { BRAND_LABELS } from "@/lib/tokens";
@@ -13,7 +13,6 @@ const NAV = [
   { href: "/admin/providers", label: "Providers", icon: Users },
   { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/admin/targets", label: "Targets", icon: Target },
-  { href: "/admin/sync", label: "Sync", icon: RefreshCw },
 ];
 // Admin-management is super-admin only.
 const SUPER_NAV = [{ href: "/admin/admins", label: "Admins", icon: ShieldCheck }];

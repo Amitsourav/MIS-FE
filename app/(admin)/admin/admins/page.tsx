@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
+import { QueryError } from "@/components/query-error";
 import { BrandChip } from "@/components/stage-badge";
 import { toast } from "@/components/ui/sonner";
 import { date } from "@/lib/format";
@@ -79,10 +80,12 @@ function CopyButton({ value }: { value: string }) {
 }
 
 export default function AdminsPage() {
-  const { data: me, isLoading: meLoading } = useMe();
+  const meQuery = useMe();
+  const { data: me, isLoading: meLoading } = meQuery;
   const isSuperAdmin = me?.role === "admin" && me?.brand == null;
 
-  const { data, isLoading } = useAdmins(isSuperAdmin);
+  const adminsQuery = useAdmins(isSuperAdmin);
+  const { data, isLoading } = adminsQuery;
   const create = useCreateAdmin();
 
   const [open, setOpen] = useState(false);
@@ -92,6 +95,11 @@ export default function AdminsPage() {
   const [created, setCreated] = useState<AdminCreated[]>([]);
 
   // Defense-in-depth: middleware redirects company admins, but guard the view too.
+  // Couldn't tell who we are: that's an error, not a permissions answer.
+  if (meQuery.isError && !me) {
+    return <QueryError error={meQuery.error} onRetry={() => void meQuery.refetch()} />;
+  }
+
   if (!meLoading && !isSuperAdmin) {
     return (
       <EmptyState
@@ -210,7 +218,17 @@ export default function AdminsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {adminsQuery.isError && !data ? (
+              <TableRow>
+                <TableCell colSpan={3} className="p-0">
+                  <QueryError
+                    className="border-0"
+                    error={adminsQuery.error}
+                    onRetry={() => void adminsQuery.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : isLoading ? (
               <TableRowsSkeleton rows={5} cols={3} />
             ) : (data?.length ?? 0) === 0 ? (
               <TableRow>

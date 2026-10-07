@@ -5,6 +5,7 @@ import {
   useMutation,
   useQueryClient,
   keepPreviousData,
+  type QueryClient,
 } from "@tanstack/react-query";
 import { api } from "./api";
 import { Filters, metricQuery, leadsQuery } from "./filters";
@@ -21,7 +22,6 @@ import type {
   CrmSourceOut,
   LeaderboardRow,
   TargetOut,
-  SyncStatusResponse,
   Me,
   Brand,
   ProviderCreate,
@@ -204,14 +204,6 @@ export function useTargets() {
   });
 }
 
-export function useSyncStatus(opts?: { refetchInterval?: number | false }) {
-  return useQuery({
-    queryKey: ["sync-status"],
-    queryFn: () => get<SyncStatusResponse>("/admin/sync/status"),
-    refetchInterval: opts?.refetchInterval ?? false,
-  });
-}
-
 // ---------------- admin: mutations ----------------
 export function useCreateProvider() {
   const qc = useQueryClient();
@@ -242,15 +234,21 @@ export function useCreateProviderUser(id: string) {
   });
 }
 
+// Data is read live from the CRM, so a new mapping shows that provider's leads and
+// payouts immediately: refresh everything that depends on the mapping.
+function invalidateAfterMapping(qc: QueryClient, providerId: string, brand: Brand) {
+  qc.invalidateQueries({ queryKey: ["provider-sources", providerId] });
+  qc.invalidateQueries({ queryKey: ["crm-sources", brand] });
+  qc.invalidateQueries({ queryKey: ["admin", "provider", providerId, "payouts"] });
+  qc.invalidateQueries({ queryKey: ["leaderboard"] });
+}
+
 export function useMapSource(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: { brand: Brand; crm_source_id: string; source_name?: string }) =>
       api.post<ProviderSourceOut>(`/admin/providers/${id}/sources`, body).then((r) => r.data),
-    onSuccess: (_d, vars) => {
-      qc.invalidateQueries({ queryKey: ["provider-sources", id] });
-      qc.invalidateQueries({ queryKey: ["crm-sources", vars.brand] });
-    },
+    onSuccess: (_d, vars) => invalidateAfterMapping(qc, id, vars.brand),
   });
 }
 
@@ -275,10 +273,7 @@ export function useMapSources() {
       const failed = results.filter((r) => r.status === "rejected").length;
       return { mapped: results.length - failed, failed };
     },
-    onSettled: (_d, _e, vars) => {
-      qc.invalidateQueries({ queryKey: ["provider-sources", vars.providerId] });
-      qc.invalidateQueries({ queryKey: ["crm-sources", vars.brand] });
-    },
+    onSettled: (_d, _e, vars) => invalidateAfterMapping(qc, vars.providerId, vars.brand),
   });
 }
 
@@ -288,17 +283,6 @@ export function useSaveTargets() {
     mutationFn: (targets: { brand?: Brand | null; metric_key: string; target_value: number }[]) =>
       api.put<TargetOut[]>("/admin/targets", { targets }).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["targets"] }),
-  });
-}
-
-export function useRunSync() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (brand?: Brand) =>
-      api
-        .post<{ triggered: boolean; detail: string }>("/admin/sync/run", brand ? { brand } : {})
-        .then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["sync-status"] }),
   });
 }
 

@@ -51,6 +51,7 @@ import {
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { QueryError } from "@/components/query-error";
 import { toast } from "@/components/ui/sonner";
 import { date } from "@/lib/format";
 import type { Brand, ProviderOut } from "@/lib/types";
@@ -72,7 +73,8 @@ function SourcePicker({
   selected: Record<string, string | null>;
   onToggle: (id: string, name: string | null) => void;
 }) {
-  const { data, isLoading } = useCrmSources(brand);
+  const crm = useCrmSources(brand);
+  const { data, isLoading } = crm;
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   const sources = (data ?? []).filter(
@@ -101,7 +103,9 @@ function SourcePicker({
         />
       </div>
       <div className="max-h-56 overflow-y-auto rounded-md border">
-        {isLoading ? (
+        {crm.isError ? (
+          <QueryError className="border-0 py-6" error={crm.error} onRetry={() => void crm.refetch()} />
+        ) : isLoading ? (
           <div className="space-y-2 p-3">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-full" />
@@ -169,7 +173,8 @@ function ActiveToggle({ provider }: { provider: ProviderOut }) {
 }
 
 export default function ProvidersPage() {
-  const { data, isLoading } = useProviders();
+  const providersQuery = useProviders();
+  const { data, isLoading } = providersQuery;
   const { data: me } = useMe();
   const { company } = useAdminCompany();
   const create = useCreateProvider();
@@ -341,7 +346,17 @@ export default function ProvidersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {providersQuery.isError && !data ? (
+              <TableRow>
+                <TableCell colSpan={6} className="p-0">
+                  <QueryError
+                    className="border-0"
+                    error={providersQuery.error}
+                    onRetry={() => void providersQuery.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : isLoading ? (
               <TableRowsSkeleton rows={5} cols={6} />
             ) : (providers?.length ?? 0) === 0 ? (
               <TableRow>

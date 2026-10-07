@@ -2,9 +2,11 @@
 
 Next.js 14 frontend for the MIS portal. External **lead providers** sign in to see how
 the leads they supplied perform across two CRMs (**FundMyCampus** `fmc` + **Admitverse** `av`),
-and an **internal admin** area manages providers, maps CRM sources, sets targets, and runs syncs.
+and an **internal admin** area manages providers, maps CRM sources and sets targets.
 
-It talks **only** to the MIS FastAPI backend, through a same-origin BFF proxy.
+It talks **only** to the MIS FastAPI backend, through a same-origin BFF proxy. The backend reads
+the CRMs **live** on every request (no sync), so data is always current and mapping a CRM source
+to a partner takes effect immediately.
 
 ## Architecture
 
@@ -24,6 +26,10 @@ httpOnly cookie mis_token ─┘     (read cookie, add        (Bearer JWT auth,
   sends filters (brand, date range, stage, search, paging).
 - `middleware.ts` gatekeeps routes by cookie + role; the proxy and backend remain the real authority.
 - No hard-coded thresholds: targets/grades/bands come from the backend; the UI only formats them.
+- **Live data:** requests take ~1–2 s, so every panel has a skeleton and nothing auto-refetches more
+  often than every ~45 s. A `503` means a CRM is briefly unreachable: the panel shows "Data source
+  temporarily unavailable" with Retry, and a failed refresh keeps the last data on screen
+  (`lib/use-last-good.ts`, `components/query-error.tsx`). Only `401` sends the user to `/login`.
 - **Admins are company-scoped.** Login/`me` return a `brand`: `null` = super-admin (sees both
   companies + the `/admin/admins` management screen + a FMC/AV/Both switcher), `"fmc"`/`"av"` =
   company admin locked to one company. A readable `mis_brand` cookie powers middleware/UI scoping;
@@ -53,9 +59,9 @@ in production (`NODE_ENV=production`).
 
 ## Project layout
 
-- `app/(portal)/` — provider area: `dashboard`, `leads`, `payout` (Phase 2 placeholder).
-- `app/(admin)/admin/` — `providers`, `providers/[id]`, `leaderboard`, `targets`, `sync`,
-  `admins` (super-admin only).
+- `app/(portal)/` — provider area: `dashboard`, `leads`, `payout` (FMC partner earnings).
+- `app/(admin)/admin/` — `providers`, `providers/[id]` (Details + Payouts tabs), `leaderboard`,
+  `targets`, `admins` (super-admin only). `/admin/sync` just redirects (nothing to sync).
 - `app/api/` — BFF: `auth/login`, `auth/logout`, `[...path]` catch-all proxy (server-only).
 - `lib/` — `types.ts` (mirrors backend 1:1), `api.ts`, `queries.ts`, `filters.ts`, `format.ts`,
   `tokens.ts` (stage/grade colors).

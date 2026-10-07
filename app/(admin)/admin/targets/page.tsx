@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrandChip } from "@/components/stage-badge";
 import { toast } from "@/components/ui/sonner";
+import { QueryError } from "@/components/query-error";
 import type { TargetOut } from "@/lib/types";
 
 const GROUP_HELP: Record<string, string> = {
@@ -29,7 +30,8 @@ function humanize(metricKey: string) {
 }
 
 export default function TargetsPage() {
-  const { data, isLoading } = useTargets();
+  const targets = useTargets();
+  const { data, isLoading } = targets;
   const save = useSaveTargets();
   const [edits, setEdits] = useState<Record<string, number>>({});
 
@@ -84,7 +86,9 @@ export default function TargetsPage() {
         all brands.
       </p>
 
-      {isLoading ? (
+      {targets.isError && !data ? (
+        <QueryError error={targets.error} onRetry={() => void targets.refetch()} />
+      ) : isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : (data?.length ?? 0) === 0 ? (
         <Card>

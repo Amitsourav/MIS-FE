@@ -6,6 +6,8 @@ import { useUrlFilters } from "@/lib/use-filters";
 import { useLeads } from "@/lib/queries";
 import { leadsQuery } from "@/lib/filters";
 import { LeadsTable } from "@/components/leads-table";
+import { QueryError } from "@/components/query-error";
+import { useLastGood } from "@/lib/use-last-good";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +35,8 @@ const STAGES: CanonicalStage[] = [
 
 export default function LeadsPage() {
   const { filters, setFilters } = useUrlFilters();
-  const { data, isLoading, isFetching } = useLeads(filters);
+  const leads = useLeads(filters);
+  const { data, error } = useLastGood(leads);
 
   // Debounced search synced to the URL.
   const [search, setSearch] = useState(filters.q ?? "");
@@ -101,17 +104,21 @@ export default function LeadsPage() {
         </Select>
       </div>
 
-      <LeadsTable
-        leads={data?.items ?? []}
-        loading={isLoading}
-        emptyHint="Adjust the brand, date, stage, or search filters."
-      />
+      {error ? (
+        <QueryError error={error} onRetry={() => void leads.refetch()} />
+      ) : (
+        <LeadsTable
+          leads={data?.items ?? []}
+          loading={!data}
+          emptyHint="Adjust the brand, date, stage, or search filters."
+        />
+      )}
 
       {/* Pagination */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {total === 0 ? "No results" : `${int(start)}–${int(end)} of ${int(total)}`}
-          {isFetching && total > 0 && <span className="ml-2 opacity-60">updating…</span>}
+          {leads.isFetching && total > 0 && <span className="ml-2 opacity-60">updating…</span>}
         </p>
         <div className="flex items-center gap-3">
           <Select

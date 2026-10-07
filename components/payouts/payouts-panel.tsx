@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { Download } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
 import { EmptyState } from "@/components/empty-state";
 import { Pagination } from "@/components/pagination";
 import { DateRangePicker } from "@/components/shell/date-range-picker";
 import { DataAsOf } from "@/components/shell/data-as-of";
 import { PayoutKpis, PayoutKpisSkeleton } from "./payout-kpis";
 import { PayoutTable } from "./payout-table";
-import { PayoutsError, PayoutsNone, PayoutsUnsupported } from "./payout-empty";
-import { errorMessage, statusOf } from "@/lib/api";
+import { PayoutsNone, PayoutsUnsupported } from "./payout-empty";
+import { QueryError } from "@/components/query-error";
+import { statusOf } from "@/lib/api";
+import { useLastGood } from "@/lib/use-last-good";
 import type { PayoutFilters, PayoutsResponse } from "@/lib/types";
 
 // Shared by the provider Payout page and the admin provider "Payouts" tab.
@@ -37,27 +37,17 @@ export function PayoutsPanel({
   onPageSizeChange: (pageSize: number) => void;
   exportHref?: string;
 }) {
-  // A failed fetch for a new key drops placeholder data, so remember the last
-  // good response and keep showing it (with a toast) instead of blanking the page.
-  const lastGood = useRef<PayoutsResponse | undefined>(undefined);
-  useEffect(() => {
-    if (query.data) lastGood.current = query.data;
-  }, [query.data]);
-
-  useEffect(() => {
-    if (query.isError && lastGood.current) toast.error("Couldn't refresh payouts");
-  }, [query.isError, query.errorUpdatedAt]);
-
-  const data = query.data ?? (query.isError ? lastGood.current : undefined);
+  // Keeps the last good response on screen (with a toast) if a refresh fails.
+  const { data, error } = useLastGood(query, "Couldn't refresh payouts");
   const allTime = !filters.date_from && !filters.date_to;
 
   if (!data) {
-    if (query.isError) {
-      if (statusOf(query.error) === 404) {
+    if (error) {
+      if (statusOf(error) === 404) {
         return <EmptyState title="Provider not found" description="It may be outside your company." />;
       }
       return (
-        <PayoutsError message={errorMessage(query.error)} onRetry={() => query.refetch()} />
+        <QueryError error={error} title="Couldn't load payouts" onRetry={() => query.refetch()} />
       );
     }
     return (

@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/table";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
+import { QueryError } from "@/components/query-error";
+import { useLastGood } from "@/lib/use-last-good";
 import { defaultRange } from "@/lib/filters";
 import { int, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -41,7 +43,8 @@ export default function LeaderboardPage() {
   const [range, setRange] = useState(() => defaultRange(30));
   const [sortKey, setSortKey] = useState<SortKey>("score_pct");
   const [asc, setAsc] = useState(false);
-  const { data, isLoading } = useLeaderboard(range);
+  const leaderboard = useLeaderboard(range);
+  const { data, error } = useLastGood(leaderboard);
 
   const sorted = [...(data ?? [])].sort((a, b) => {
     const av = a[sortKey];
@@ -94,7 +97,17 @@ export default function LeaderboardPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {error ? (
+              <TableRow>
+                <TableCell colSpan={9} className="p-0">
+                  <QueryError
+                    className="border-0"
+                    error={error}
+                    onRetry={() => void leaderboard.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            ) : !data ? (
               <TableRowsSkeleton rows={6} cols={9} />
             ) : sorted.length === 0 ? (
               <TableRow>

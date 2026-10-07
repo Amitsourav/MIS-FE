@@ -191,16 +191,6 @@ export interface TargetOut {
   metric_key: string;
   target_value: number;
 }
-export interface SyncStateOut {
-  brand: Brand;
-  last_watermark: string | null;
-  last_run_at: string | null;
-  last_status: string | null;
-}
-export interface SyncStatusResponse {
-  states: SyncStateOut[];
-  running: boolean;
-}
 
 // --- payouts (FundMyCampus only) ---
 /** Decimal money as a string, e.g. "10800.00". Never do arithmetic on it. */

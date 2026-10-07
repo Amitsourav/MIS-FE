@@ -1,20 +1,18 @@
 "use client";
 
-import { Clock } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { dateTime } from "@/lib/format";
 
+// The backend reads the CRMs live, so data_as_of is just the request time.
+// Show "Live" rather than a timestamp that would suggest the data might be old.
 export function DataAsOf({ value }: { value: string | null | undefined }) {
   if (!value) return null;
-  const d = new Date(value);
-  const rel = Number.isNaN(d.getTime()) ? "—" : `${formatDistanceToNow(d)} ago`;
   return (
     <span
-      title={dateTime(value)}
+      title={`Updated ${dateTime(value)}`}
       className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
     >
-      <Clock className="h-3 w-3" />
-      Data as of {rel}
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      Live
     </span>
   );
 }
