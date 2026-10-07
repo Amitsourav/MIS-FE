@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Loader2, ChevronRight } from "lucide-react";
+import { Plus, Loader2, ChevronRight, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useProviders, useCreateProvider, useUpdateProvider, useMe } from "@/lib/queries";
+import {
+  useProviders,
+  useCreateProvider,
+  useUpdateProvider,
+  useMe,
+  useCrmSources,
+  useMapSources,
+} from "@/lib/queries";
 import { errorMessage } from "@/lib/api";
 import { useAdminCompany, effectiveCompany } from "@/lib/admin-company";
 import { Button } from "@/components/ui/button";
@@ -42,6 +49,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { TableRowsSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { toast } from "@/components/ui/sonner";
 import { date } from "@/lib/format";
@@ -52,6 +60,94 @@ const schema = z.object({
   contact_email: z.string().email("Invalid email").optional().or(z.literal("")),
 });
 type FormValues = z.infer<typeof schema>;
+
+// Checkbox list of the company's CRM sources, shown once a company is known.
+// Sources already mapped to another provider are shown but can't be picked.
+function SourcePicker({
+  brand,
+  selected,
+  onToggle,
+}: {
+  brand: Brand;
+  selected: Record<string, string | null>;
+  onToggle: (id: string, name: string | null) => void;
+}) {
+  const { data, isLoading } = useCrmSources(brand);
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const sources = (data ?? []).filter(
+    (s) =>
+      !needle ||
+      (s.name ?? "").toLowerCase().includes(needle) ||
+      s.crm_source_id.toLowerCase().includes(needle),
+  );
+  const count = Object.keys(selected).length;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label>CRM sources ({BRAND_LABELS[brand]})</Label>
+        <span className="text-xs text-muted-foreground">
+          {count > 0 ? `${count} selected` : "Optional"}
+        </span>
+      </div>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search sources…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+      <div className="max-h-56 overflow-y-auto rounded-md border">
+        {isLoading ? (
+          <div className="space-y-2 p-3">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-full" />
+          </div>
+        ) : sources.length === 0 ? (
+          <p className="p-3 text-sm text-muted-foreground">
+            {needle ? "No sources match." : "No CRM sources found for this company."}
+          </p>
+        ) : (
+          <ul className="divide-y">
+            {sources.map((s) => {
+              const taken = !!s.already_mapped_to;
+              return (
+                <li key={s.crm_source_id}>
+                  <label
+                    className={
+                      taken
+                        ? "flex cursor-not-allowed items-center gap-3 px-3 py-2 opacity-60"
+                        : "flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/50"
+                    }
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-primary"
+                      disabled={taken}
+                      checked={s.crm_source_id in selected}
+                      onChange={() => onToggle(s.crm_source_id, s.name)}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm">{s.name ?? s.crm_source_id}</span>
+                      {taken && (
+                        <span className="block text-xs text-muted-foreground">
+                          Mapped to {s.already_mapped_to}
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function ActiveToggle({ provider }: { provider: ProviderOut }) {
   const update = useUpdateProvider(provider.id);
@@ -77,8 +173,11 @@ export default function ProvidersPage() {
   const { data: me } = useMe();
   const { company } = useAdminCompany();
   const create = useCreateProvider();
+  const mapSources = useMapSources();
   const [open, setOpen] = useState(false);
   const [formBrand, setFormBrand] = useState<Brand | "">("");
+  // crm_source_id -> source name, for the sources ticked in the dialog.
+  const [selected, setSelected] = useState<Record<string, string | null>>({});
   const {
     register,
     handleSubmit,
@@ -91,6 +190,23 @@ export default function ProvidersPage() {
   const scope = effectiveCompany(me?.brand, company);
   const providers =
     scope === "both" ? data : data?.filter((p) => p.brand === scope);
+  // Company whose sources to offer: the picked one for super-admins, else the admin's own.
+  const sourceBrand: Brand | "" = isSuperAdmin ? formBrand : me?.brand ?? "";
+
+  function toggleSource(id: string, name: string | null) {
+    setSelected((prev) => {
+      const next = { ...prev };
+      if (id in next) delete next[id];
+      else next[id] = name;
+      return next;
+    });
+  }
+
+  function resetForm() {
+    reset();
+    setFormBrand("");
+    setSelected({});
+  }
 
   function onSubmit(values: FormValues) {
     if (isSuperAdmin && !formBrand) {
@@ -105,11 +221,31 @@ export default function ProvidersPage() {
         ...(isSuperAdmin ? { brand: formBrand as Brand } : {}),
       },
       {
-        onSuccess: () => {
-          toast.success("Provider created");
-          reset();
-          setFormBrand("");
+        onSuccess: (provider) => {
+          const sources = Object.entries(selected).map(([crm_source_id, name]) => ({
+            crm_source_id,
+            source_name: name ?? undefined,
+          }));
+          resetForm();
           setOpen(false);
+          if (sources.length === 0) {
+            toast.success("Provider created");
+            return;
+          }
+          mapSources.mutate(
+            { providerId: provider.id, brand: provider.brand, sources },
+            {
+              onSuccess: ({ mapped, failed }) => {
+                if (failed === 0) {
+                  toast.success(`Provider created with ${mapped} source${mapped === 1 ? "" : "s"}`);
+                } else {
+                  toast.error(
+                    `Provider created, but ${failed} of ${sources.length} sources couldn't be mapped. Map them from the provider page.`,
+                  );
+                }
+              },
+            },
+          );
         },
         onError: (e) => toast.error(errorMessage(e)),
       },
@@ -123,7 +259,13 @@ export default function ProvidersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Providers</h1>
           <p className="text-sm text-muted-foreground">Manage lead providers and their access.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4" />
@@ -140,7 +282,13 @@ export default function ProvidersPage() {
                 {isSuperAdmin && (
                   <div className="space-y-1.5">
                     <Label>Company</Label>
-                    <Select value={formBrand} onValueChange={(v) => setFormBrand(v as Brand)}>
+                    <Select
+                      value={formBrand}
+                      onValueChange={(v) => {
+                        setFormBrand(v as Brand);
+                        setSelected({}); // sources belong to one company
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a company" />
                       </SelectTrigger>
@@ -163,10 +311,15 @@ export default function ProvidersPage() {
                     <p className="text-xs text-destructive">{errors.contact_email.message}</p>
                   )}
                 </div>
+                {sourceBrand && (
+                  <SourcePicker brand={sourceBrand} selected={selected} onToggle={toggleSource} />
+                )}
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={create.isPending}>
-                  {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={create.isPending || mapSources.isPending}>
+                  {(create.isPending || mapSources.isPending) && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
                   Create
                 </Button>
               </DialogFooter>

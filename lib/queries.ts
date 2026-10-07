@@ -254,6 +254,34 @@ export function useMapSource(id: string) {
   });
 }
 
+// Map several CRM sources to a provider in one go (used right after creating it).
+// Each source is its own request; failures (e.g. 409 already mapped) don't stop the rest.
+export function useMapSources() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      providerId: string;
+      brand: Brand;
+      sources: { crm_source_id: string; source_name?: string }[];
+    }) => {
+      const results = await Promise.allSettled(
+        vars.sources.map((s) =>
+          api.post<ProviderSourceOut>(`/admin/providers/${vars.providerId}/sources`, {
+            brand: vars.brand,
+            ...s,
+          }),
+        ),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      return { mapped: results.length - failed, failed };
+    },
+    onSettled: (_d, _e, vars) => {
+      qc.invalidateQueries({ queryKey: ["provider-sources", vars.providerId] });
+      qc.invalidateQueries({ queryKey: ["crm-sources", vars.brand] });
+    },
+  });
+}
+
 export function useSaveTargets() {
   const qc = useQueryClient();
   return useMutation({
