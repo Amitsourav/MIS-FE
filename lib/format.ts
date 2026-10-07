@@ -1,3 +1,5 @@
+import { parseISO } from "date-fns";
+
 // Formatting helpers. Backend sends rates as 0–1 ratios; pct() renders them.
 
 const numberFmt = new Intl.NumberFormat("en-US");
@@ -39,7 +41,9 @@ export function duration(sec: number | null | undefined): string {
 /** Localized date from an ISO string. */
 export function date(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
+  // A bare YYYY-MM-DD is a calendar date: parse it as local, not UTC midnight
+  // (new Date("2026-08-20") renders as Aug 19 west of UTC).
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? parseISO(iso) : new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString(undefined, {
     year: "numeric",
@@ -67,4 +71,36 @@ export function timeOnly(iso: string | null | undefined): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+const inrFmt = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+const inrPaiseFmt = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Money string -> Indian-grouped rupees, paise only when non-zero.
+ * "1234567.5" -> "₹12,34,567.50", "81180.00" -> "₹81,180". Display only — never sum.
+ */
+export function inr(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const hasPaise = Math.round(n * 100) % 100 !== 0;
+  return (hasPaise ? inrPaiseFmt : inrFmt).format(n);
+}
+
+/** Percent string -> label: "0.60" -> "0.6%", "1.00" -> "1%"; null -> null (caller shows "Agreed"). */
+export function ratePct(rate: string | null | undefined): string | null {
+  if (rate == null || rate === "") return null;
+  const n = Number(rate);
+  return Number.isFinite(n) ? `${n}%` : null;
 }

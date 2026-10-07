@@ -15,10 +15,15 @@ export function DateRangePicker({
   from,
   to,
   onChange,
+  allTime = false,
+  onAllTime,
 }: {
   from: string;
   to: string;
   onChange: (range: { from: string; to: string }) => void;
+  allTime?: boolean;
+  // When provided, an "All time" option is shown that drops from/to entirely.
+  onAllTime?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [localFrom, setLocalFrom] = useState(from);
@@ -27,6 +32,11 @@ export function DateRangePicker({
   function applyPreset(days: number) {
     const r = defaultRange(days);
     onChange(r);
+    setOpen(false);
+  }
+
+  function applyAllTime() {
+    onAllTime?.();
     setOpen(false);
   }
 
@@ -43,16 +53,16 @@ export function DateRangePicker({
         <Button variant="outline" size="sm" className="gap-2 font-normal">
           <CalendarDays className="h-4 w-4" />
           <span className="hidden sm:inline">
-            {fmt(from)} – {fmt(to)}
+            {allTime ? "All time" : `${fmt(from)} – ${fmt(to)}`}
           </span>
-          <span className="sm:hidden">Dates</span>
+          <span className="sm:hidden">{allTime ? "All time" : "Dates"}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 space-y-3">
         <div className="flex gap-1.5">
           {DATE_PRESETS.map((p) => {
             const presetFrom = ymd(subDays(new Date(), p.days));
-            const active = from === presetFrom;
+            const active = !allTime && from === presetFrom;
             return (
               <Button
                 key={p.label}
@@ -66,6 +76,16 @@ export function DateRangePicker({
             );
           })}
         </div>
+        {onAllTime && (
+          <Button
+            variant={allTime ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+            onClick={applyAllTime}
+          >
+            All time
+          </Button>
+        )}
         <div className="space-y-2 border-t pt-3">
           <div className="space-y-1">
             <Label htmlFor="from" className="text-xs">

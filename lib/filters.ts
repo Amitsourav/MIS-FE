@@ -6,6 +6,7 @@ export interface Filters {
   brand: BrandFilter;
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
+  allTime?: boolean; // when true, from/to are ignored and all_time=true is sent
   stage?: CanonicalStage | "all";
   q?: string;
   page?: number;
@@ -35,6 +36,7 @@ export function parseFilters(sp: URLSearchParams): Filters {
     brand: ["fmc", "av", "both"].includes(brand) ? brand : "both",
     from: sp.get("from") || dFrom,
     to: sp.get("to") || dTo,
+    allTime: sp.get("all_time") === "1",
     stage: (sp.get("stage") as CanonicalStage | "all") || "all",
     q: sp.get("q") || "",
     page: sp.get("page") ? Number(sp.get("page")) : 1,
@@ -42,9 +44,14 @@ export function parseFilters(sp: URLSearchParams): Filters {
   };
 }
 
-/** Serialize filters to a query string for API calls (brand=both is omitted). */
+/**
+ * Serialize filters to a query string for API calls. brand=both is omitted;
+ * when allTime is set, from/to are dropped in favor of all_time=true.
+ */
 export function metricQuery(f: Filters): Record<string, string> {
-  const q: Record<string, string> = { from: f.from, to: f.to };
+  const q: Record<string, string> = f.allTime
+    ? { all_time: "true" }
+    : { from: f.from, to: f.to };
   if (f.brand && f.brand !== "both") q.brand = f.brand;
   return q;
 }

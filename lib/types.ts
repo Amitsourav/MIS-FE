@@ -201,3 +201,46 @@ export interface SyncStatusResponse {
   states: SyncStateOut[];
   running: boolean;
 }
+
+// --- payouts (FundMyCampus only) ---
+/** Decimal money as a string, e.g. "10800.00". Never do arithmetic on it. */
+export type MoneyString = string;
+
+export type PayoutBasis = "rate" | "agreed";
+
+export interface PayoutSummary {
+  students: number; // distinct students (one student can span several lender rows)
+  loan_total: MoneyString;
+  earned: MoneyString;
+  paid: MoneyString;
+  pending: MoneyString;
+}
+
+export interface PayoutItem {
+  serial_no: number | null;
+  full_name: string | null;
+  bank_name: string | null;
+  loan_amount: MoneyString | null; // sanctioned by this lender
+  pf_paid_on: string | null; // YYYY-MM-DD — the date the payout is earned
+  disbursed_total: MoneyString; // information only
+  payout_basis: PayoutBasis;
+  payout_rate: string | null; // percent, e.g. "0.60"; null when basis = "agreed"
+  earned: MoneyString;
+  paid: MoneyString;
+  pending: MoneyString;
+}
+
+export interface PayoutsResponse {
+  brand_supported: boolean;
+  summary: PayoutSummary;
+  items: PayoutItem[];
+  page: number;
+  page_size: number;
+  total: number; // rows (student × lender), for pagination
+  data_as_of: string | null;
+}
+
+export interface PayoutFilters {
+  date_from?: string; // omit for all time
+  date_to?: string;
+}

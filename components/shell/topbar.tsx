@@ -14,13 +14,15 @@ import { BRAND_LABELS } from "@/lib/tokens";
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/leads", label: "Leads" },
-  { href: "/payout", label: "Payout", soon: true },
+  { href: "/payout", label: "Payout" },
 ];
 
 export function Topbar() {
   const pathname = usePathname();
   const { filters, setFilters } = useUrlFilters();
-  const { data: overview } = useOverview(filters);
+  // Payout has its own all-time-default date filter and "Data as of" chip.
+  const ownsDateFilter = pathname === "/payout" || pathname.startsWith("/payout/");
+  const { data: overview } = useOverview(filters, { enabled: !ownsDateFilter });
   const { data: me } = useMe();
 
   return (
@@ -48,18 +50,13 @@ export function Topbar() {
                 )}
               >
                 {item.label}
-                {item.soon && (
-                  <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-                    Soon
-                  </span>
-                )}
               </Link>
             );
           })}
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <DataAsOf value={overview?.data_as_of} />
+          {!ownsDateFilter && <DataAsOf value={overview?.data_as_of} />}
           {/* A provider belongs to one company — show it as a read-only label.
               No switcher: the backend scopes data by the JWT. */}
           {me?.brand && (
@@ -67,11 +64,15 @@ export function Topbar() {
               {BRAND_LABELS[me.brand]}
             </span>
           )}
-          <DateRangePicker
-            from={filters.from}
-            to={filters.to}
-            onChange={(r) => setFilters({ from: r.from, to: r.to })}
-          />
+          {!ownsDateFilter && (
+            <DateRangePicker
+              from={filters.from}
+              to={filters.to}
+              allTime={!!filters.allTime}
+              onChange={(r) => setFilters({ from: r.from, to: r.to, all_time: undefined })}
+              onAllTime={() => setFilters({ all_time: "1", from: undefined, to: undefined })}
+            />
+          )}
           <div className="hidden items-center gap-2 border-l pl-3 md:flex">
             <span className="max-w-[140px] truncate text-sm text-muted-foreground">
               {me?.provider_name ?? me?.email ?? ""}

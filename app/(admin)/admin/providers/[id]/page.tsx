@@ -11,6 +11,7 @@ import {
   useCreateProviderUser,
   useCrmSources,
   useMapSource,
+  useAdminProviderPayouts,
 } from "@/lib/queries";
 import { errorMessage, statusOf } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrandChip } from "@/components/stage-badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PayoutsPanel } from "@/components/payouts/payouts-panel";
 import { EmptyState } from "@/components/empty-state";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -39,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BRAND_LABELS } from "@/lib/tokens";
-import type { Brand, ProviderUserCreated } from "@/lib/types";
+import type { Brand, PayoutFilters, ProviderUserCreated } from "@/lib/types";
 
 export default function ProviderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -59,20 +62,34 @@ export default function ProviderDetailPage() {
             {isLoading ? <Skeleton className="h-7 w-48" /> : provider?.name ?? "Provider not found"}
             {provider && <BrandChip brand={provider.brand} />}
           </h1>
-          <p className="text-sm text-muted-foreground">Edit details, manage logins, and map CRM sources.</p>
+          <p className="text-sm text-muted-foreground">
+            Edit details, manage logins, map CRM sources, and review payouts.
+          </p>
         </div>
       </div>
 
       {!isLoading && !provider ? (
         <EmptyState title="Provider not found" description="It may have been removed." />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <EditProviderCard id={id} />
-          <LoginsCard id={id} />
-          <div className="lg:col-span-2">
-            <SourcesCard id={id} />
-          </div>
-        </div>
+        // Inactive tab content unmounts, so payouts are only fetched while that tab is open.
+        <Tabs defaultValue="details" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="payouts">Payouts</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <EditProviderCard id={id} />
+              <LoginsCard id={id} />
+              <div className="lg:col-span-2">
+                <SourcesCard id={id} />
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="payouts">
+            <PayoutsTab id={id} />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
@@ -375,5 +392,32 @@ function SourcesCard({ id }: { id: string }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Same view as the provider's Payout page, minus Export (no admin export endpoint).
+// Filter/paging state is local so it never collides with other query params.
+function PayoutsTab({ id }: { id: string }) {
+  const [filters, setFilters] = useState<PayoutFilters>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const query = useAdminProviderPayouts(id, filters, page, pageSize);
+
+  return (
+    <PayoutsPanel
+      query={query}
+      filters={filters}
+      onFiltersChange={(f) => {
+        setFilters(f);
+        setPage(1);
+      }}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={setPage}
+      onPageSizeChange={(n) => {
+        setPageSize(n);
+        setPage(1);
+      }}
+    />
   );
 }

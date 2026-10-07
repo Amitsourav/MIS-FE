@@ -28,6 +28,8 @@ import type {
   AdminOut,
   AdminCreated,
   AdminCreate,
+  PayoutsResponse,
+  PayoutFilters,
 } from "./types";
 
 const STALE = 45_000;
@@ -48,12 +50,13 @@ export function useMe() {
 }
 
 // ---------------- provider metrics ----------------
-export function useOverview(f: Filters) {
+export function useOverview(f: Filters, opts?: { enabled?: boolean }) {
   const params = metricQuery(f);
   return useQuery({
     queryKey: ["overview", params],
     queryFn: () => get<OverviewResponse>("/me/overview", params),
     staleTime: STALE,
+    enabled: opts?.enabled ?? true,
   });
 }
 
@@ -67,7 +70,9 @@ export function useTrends(f: Filters, granularity: "day" | "week") {
 }
 
 export function useBrandSplit(f: Filters) {
-  const params = { from: f.from, to: f.to };
+  const params: Record<string, string> = f.allTime
+    ? { all_time: "true" }
+    : { from: f.from, to: f.to };
   return useQuery({
     queryKey: ["brand-split", params],
     queryFn: () => get<BrandSplitResponse>("/me/brand-split", params),
@@ -92,6 +97,53 @@ export function useLeads(f: Filters) {
     staleTime: STALE,
     placeholderData: keepPreviousData,
   });
+}
+
+// ---------------- payouts ----------------
+// Note: /provider/payouts (not /me/...) and date_from/date_to (not from/to).
+// Omitting both dates means all time.
+function payoutParams(f: PayoutFilters, page?: number, pageSize?: number): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (f.date_from) params.date_from = f.date_from;
+  if (f.date_to) params.date_to = f.date_to;
+  if (page !== undefined) params.page = String(page);
+  if (pageSize !== undefined) params.page_size = String(pageSize);
+  return params;
+}
+
+export function usePayouts(filters: PayoutFilters, page: number, pageSize: number) {
+  return useQuery({
+    queryKey: ["payouts", payoutParams(filters), page, pageSize],
+    queryFn: () =>
+      get<PayoutsResponse>("/provider/payouts", payoutParams(filters, page, pageSize)),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminProviderPayouts(
+  providerId: string,
+  filters: PayoutFilters,
+  page: number,
+  pageSize: number,
+) {
+  return useQuery({
+    queryKey: ["admin", "provider", providerId, "payouts", payoutParams(filters), page, pageSize],
+    queryFn: () =>
+      get<PayoutsResponse>(
+        `/admin/providers/${providerId}/payouts`,
+        payoutParams(filters, page, pageSize),
+      ),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    enabled: !!providerId,
+  });
+}
+
+/** Same-origin CSV download URL for the provider's payouts (dates only, when set). */
+export function payoutsExportUrl(filters: PayoutFilters): string {
+  const qs = new URLSearchParams(payoutParams(filters)).toString();
+  return `/api/provider/payouts/export${qs ? `?${qs}` : ""}`;
 }
 
 // ---------------- admin: providers ----------------
