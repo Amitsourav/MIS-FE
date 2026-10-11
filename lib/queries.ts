@@ -29,6 +29,7 @@ import type {
   AdminCreated,
   AdminCreate,
   PayoutsResponse,
+  CrmStageOption,
   PayoutFilters,
 } from "./types";
 
@@ -94,6 +95,17 @@ export function useLeads(f: Filters) {
   return useQuery({
     queryKey: ["leads", params],
     queryFn: () => get<Page<LeadOut>>("/me/leads", params),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+  });
+}
+
+// CRM stages for the Leads filter, scoped like /me/leads (dates/brand, not stage/search).
+export function useStages(f: Filters) {
+  const params = metricQuery(f);
+  return useQuery({
+    queryKey: ["stages", params],
+    queryFn: () => get<CrmStageOption[]>("/me/stages", params),
     staleTime: STALE,
     placeholderData: keepPreviousData,
   });

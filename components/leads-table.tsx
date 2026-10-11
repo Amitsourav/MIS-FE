@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { StageBadge, BrandChip } from "@/components/stage-badge";
+import { BrandChip } from "@/components/stage-badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { date } from "@/lib/format";
@@ -59,9 +59,8 @@ export function LeadsTable({
                 <TableCell className="max-w-[160px] truncate text-muted-foreground">
                   {l.source_name ?? "—"}
                 </TableCell>
-                <TableCell>
-                  <StageBadge stage={l.canonical_stage} />
-                </TableCell>
+                {/* The CRM's own stage name; canonical_stage is only for charts. */}
+                <TableCell className="whitespace-nowrap">{l.crm_stage_label ?? "—"}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">
                   {date(l.created_at)}
                 </TableCell>

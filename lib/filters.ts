@@ -1,5 +1,5 @@
 import { subDays, format as fmtDate } from "date-fns";
-import type { BrandFilter, CanonicalStage } from "./types";
+import type { BrandFilter } from "./types";
 
 // Shared filter state that lives in the URL so views are shareable & refresh-safe.
 export interface Filters {
@@ -7,7 +7,7 @@ export interface Filters {
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
   allTime?: boolean; // when true, from/to are ignored and all_time=true is sent
-  stage?: CanonicalStage | "all";
+  crmStage?: string; // CRM stage value from /me/stages; empty = all stages
   q?: string;
   page?: number;
   pageSize?: number;
@@ -37,7 +37,7 @@ export function parseFilters(sp: URLSearchParams): Filters {
     from: sp.get("from") || dFrom,
     to: sp.get("to") || dTo,
     allTime: sp.get("all_time") === "1",
-    stage: (sp.get("stage") as CanonicalStage | "all") || "all",
+    crmStage: sp.get("crm_stage") || "",
     q: sp.get("q") || "",
     page: sp.get("page") ? Number(sp.get("page")) : 1,
     pageSize: sp.get("page_size") ? Number(sp.get("page_size")) : 50,
@@ -56,10 +56,10 @@ export function metricQuery(f: Filters): Record<string, string> {
   return q;
 }
 
-/** Serialize filters for the leads endpoint (adds stage/q/paging). */
+/** Serialize filters for the leads endpoint (adds crm_stage/q/paging). */
 export function leadsQuery(f: Filters): Record<string, string> {
   const q = metricQuery(f);
-  if (f.stage && f.stage !== "all") q.stage = f.stage;
+  if (f.crmStage) q.crm_stage = f.crmStage;
   if (f.q) q.q = f.q;
   q.page = String(f.page ?? 1);
   q.page_size = String(f.pageSize ?? 50);

@@ -115,10 +115,18 @@ export interface LeadOut {
   phone: string | null;
   brand: Brand;
   source_name: string | null;
-  canonical_stage: CanonicalStage;
+  canonical_stage: CanonicalStage; // charts only — the table shows crm_stage_label
+  crm_stage_label: string | null; // the CRM's own stage name
   is_invalid: boolean;
   is_duplicate: boolean;
   created_at: string | null;
+}
+
+// A CRM stage for the Leads filter, in the CRM's own order (GET /me/stages).
+export interface CrmStageOption {
+  value: string; // sent back as crm_stage=
+  label: string;
+  count: number;
 }
 
 // --- admin ---

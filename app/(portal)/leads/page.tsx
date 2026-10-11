@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
-import { useLeads } from "@/lib/queries";
+import { useLeads, useStages } from "@/lib/queries";
 import { leadsQuery } from "@/lib/filters";
 import { LeadsTable } from "@/components/leads-table";
 import { QueryError } from "@/components/query-error";
@@ -17,26 +17,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { STAGE_LABELS } from "@/lib/tokens";
 import { int } from "@/lib/format";
-import type { CanonicalStage } from "@/lib/types";
 
-const STAGES: CanonicalStage[] = [
-  "delivered",
-  "contacted",
-  "connected",
-  "qualified",
-  "in_process",
-  "converted",
-  "opportunity",
-  "dnp",
-  "lost",
-];
+// Radix Select can't use "" as an item value, so "all stages" gets a sentinel.
+const ALL_STAGES = "__all__";
 
 export default function LeadsPage() {
   const { filters, setFilters } = useUrlFilters();
   const leads = useLeads(filters);
   const { data, error } = useLastGood(leads);
+  // CRM stages (in CRM order) for the current date/brand scope.
+  const stages = useStages(filters);
+  const stageOptions = stages.data ?? [];
+  const selectedStage = filters.crmStage ?? "";
+  // A stage picked earlier may have no leads in a new date range; keep it selectable.
+  const selectedMissing =
+    !!selectedStage && !!stages.data && !stageOptions.some((s) => s.value === selectedStage);
 
   // Debounced search synced to the URL.
   const [search, setSearch] = useState(filters.q ?? "");
@@ -87,19 +83,35 @@ export default function LeadsPage() {
           />
         </div>
         <Select
-          value={filters.stage ?? "all"}
-          onValueChange={(v) => setFilters({ stage: v === "all" ? undefined : v })}
+          value={selectedStage || ALL_STAGES}
+          onValueChange={(v) =>
+            // `stage` is the old canonical filter param; drop it from older bookmarks.
+            setFilters({ crm_stage: v === ALL_STAGES ? undefined : v, stage: undefined })
+          }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-56">
             <SelectValue placeholder="All stages" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All stages</SelectItem>
-            {STAGES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {STAGE_LABELS[s]}
+            <SelectItem value={ALL_STAGES}>All stages</SelectItem>
+            {stageOptions.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label} ({int(s.count)})
               </SelectItem>
             ))}
+            {selectedMissing && (
+              <SelectItem value={selectedStage}>{selectedStage} (0)</SelectItem>
+            )}
+            {stages.isLoading && (
+              <SelectItem value="__loading__" disabled>
+                Loading stages…
+              </SelectItem>
+            )}
+            {stages.isError && !stages.data && (
+              <SelectItem value="__error__" disabled>
+                Couldn&apos;t load stages
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>
