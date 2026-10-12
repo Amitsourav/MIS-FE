@@ -19,6 +19,8 @@ import type {
   ProviderOut,
   ProviderSourceOut,
   ProviderUserCreated,
+  ProviderUserOut,
+  UnmappedPayoutsResponse,
   CrmSourceOut,
   LeaderboardRow,
   TargetOut,
@@ -152,6 +154,15 @@ export function useAdminProviderPayouts(
   });
 }
 
+// FMC payouts on sources no provider is mapped to. FMC + super admins only; not paged.
+export function useUnmappedPayouts() {
+  return useQuery({
+    queryKey: ["admin", "payouts", "unmapped"],
+    queryFn: () => get<UnmappedPayoutsResponse>("/admin/payouts/unmapped"),
+    staleTime: STALE,
+  });
+}
+
 /** Same-origin CSV download URL for the provider's payouts (dates only, when set). */
 export function payoutsExportUrl(filters: PayoutFilters): string {
   const qs = new URLSearchParams(payoutParams(filters)).toString();
@@ -239,10 +250,35 @@ export function useUpdateProvider(id: string) {
   });
 }
 
+export function useProviderUsers(id: string) {
+  return useQuery({
+    queryKey: ["provider-users", id],
+    queryFn: () => get<ProviderUserOut[]>(`/admin/providers/${id}/users`),
+    staleTime: STALE,
+    enabled: !!id,
+  });
+}
+
 export function useCreateProviderUser(id: string) {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: { email: string; password?: string }) =>
       api.post<ProviderUserCreated>(`/admin/providers/${id}/users`, body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["provider-users", id] }),
+  });
+}
+
+// Omit password to have the backend generate one (returned once as temp_password).
+// Signs out anyone still using the old password.
+export function useResetProviderPassword(id: string) {
+  return useMutation({
+    mutationFn: (vars: { userId: string; password?: string }) =>
+      api
+        .post<ProviderUserCreated>(
+          `/admin/providers/${id}/users/${vars.userId}/reset-password`,
+          vars.password ? { password: vars.password } : undefined,
+        )
+        .then((r) => r.data),
   });
 }
 
@@ -253,6 +289,7 @@ function invalidateAfterMapping(qc: QueryClient, providerId: string, brand: Bran
   qc.invalidateQueries({ queryKey: ["crm-sources", brand] });
   qc.invalidateQueries({ queryKey: ["admin", "provider", providerId, "payouts"] });
   qc.invalidateQueries({ queryKey: ["leaderboard"] });
+  qc.invalidateQueries({ queryKey: ["admin", "payouts", "unmapped"] });
 }
 
 export function useMapSource(id: string) {
@@ -260,6 +297,17 @@ export function useMapSource(id: string) {
   return useMutation({
     mutationFn: (body: { brand: Brand; crm_source_id: string; source_name?: string }) =>
       api.post<ProviderSourceOut>(`/admin/providers/${id}/sources`, body).then((r) => r.data),
+    onSuccess: (_d, vars) => invalidateAfterMapping(qc, id, vars.brand),
+  });
+}
+
+// Unmap a source (e.g. mapped to the wrong provider). Its leads and payouts leave
+// this provider at once and the source can be mapped elsewhere.
+export function useUnmapSource(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { mappingId: string; brand: Brand }) =>
+      api.delete(`/admin/providers/${id}/sources/${vars.mappingId}`).then(() => undefined),
     onSuccess: (_d, vars) => invalidateAfterMapping(qc, id, vars.brand),
   });
 }

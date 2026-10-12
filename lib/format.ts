@@ -104,3 +104,8 @@ export function ratePct(rate: string | null | undefined): string | null {
   const n = Number(rate);
   return Number.isFinite(n) ? `${n}%` : null;
 }
+
+/** True when a money string is above "0.00" (a comparison only — no arithmetic). */
+export function isPositive(value: string | null | undefined): boolean {
+  return value != null && Number(value) > 0;
+}

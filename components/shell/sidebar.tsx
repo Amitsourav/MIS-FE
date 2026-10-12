@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Trophy, Target, BarChart3, ShieldCheck } from "lucide-react";
+import { Users, Trophy, Target, BarChart3, ShieldCheck, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/lib/queries";
 import { BRAND_LABELS } from "@/lib/tokens";
@@ -14,6 +14,8 @@ const NAV = [
   { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/admin/targets", label: "Targets", icon: Target },
 ];
+// Payouts exist for FundMyCampus only: FMC and super admins.
+const FMC_NAV = [{ href: "/admin/unassigned-payouts", label: "Unassigned payouts", icon: Wallet }];
 // Admin-management is super-admin only.
 const SUPER_NAV = [{ href: "/admin/admins", label: "Admins", icon: ShieldCheck }];
 
@@ -22,7 +24,8 @@ export function Sidebar() {
   const { data: me } = useMe();
   // Admin whose brand is null = super-admin (sees both companies).
   const isSuperAdmin = me?.role === "admin" && (me?.brand == null);
-  const nav = isSuperAdmin ? [...NAV, ...SUPER_NAV] : NAV;
+  const seesPayouts = me?.role === "admin" && (me.brand == null || me.brand === "fmc");
+  const nav = [...NAV, ...(seesPayouts ? FMC_NAV : []), ...(isSuperAdmin ? SUPER_NAV : [])];
 
   return (
     <aside className="flex w-60 flex-col border-r bg-muted/20">

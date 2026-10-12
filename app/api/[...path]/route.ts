@@ -46,6 +46,16 @@ async function handler(req: NextRequest, ctx: { params: { path: string[] } }) {
   const cd = backendRes.headers.get("content-disposition");
   if (cd) resHeaders.set("content-disposition", cd);
 
+  // A 401 on a browser navigation (CSV export link) can't be caught by the API
+  // client, so redirect to /login here instead of showing raw JSON.
+  if (backendRes.status === 401 && req.headers.get("sec-fetch-mode") === "navigate") {
+    const redirect = NextResponse.redirect(new URL("/login?reason=session", req.url));
+    redirect.cookies.delete(TOKEN_COOKIE);
+    redirect.cookies.delete(ROLE_COOKIE);
+    redirect.cookies.delete(BRAND_COOKIE);
+    return redirect;
+  }
+
   const response = new NextResponse(backendRes.body, {
     status: backendRes.status,
     headers: resHeaders,

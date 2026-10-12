@@ -161,13 +161,15 @@ export interface AdminCreate {
   password?: string;
   brand?: Brand | null; // null = super-admin, "fmc"/"av" = company admin
 }
-export interface ProviderUserCreated {
+export interface ProviderUserOut {
   id: string;
   provider_id: string;
   email: string;
   is_active: boolean;
   created_at: string;
-  temp_password?: string | null;
+}
+export interface ProviderUserCreated extends ProviderUserOut {
+  temp_password?: string | null; // returned once, when the backend generated it
 }
 export interface ProviderSourceOut {
   id: string;
@@ -212,6 +214,7 @@ export interface PayoutSummary {
   earned: MoneyString;
   paid: MoneyString;
   pending: MoneyString;
+  overpaid: MoneyString; // paid beyond earned; "0.00" normally
 }
 
 export interface PayoutItem {
@@ -226,6 +229,7 @@ export interface PayoutItem {
   earned: MoneyString;
   paid: MoneyString;
   pending: MoneyString;
+  overpaid: MoneyString; // paid beyond earned; "0.00" normally
 }
 
 export interface PayoutsResponse {
@@ -241,4 +245,15 @@ export interface PayoutsResponse {
 export interface PayoutFilters {
   date_from?: string; // omit for all time
   date_to?: string;
+}
+
+// Admin only: FMC payouts on CRM sources no provider is mapped to (GET /admin/payouts/unmapped).
+export interface UnmappedPayoutItem extends PayoutItem {
+  crm_source_id: string | null;
+  source_name: string | null;
+}
+export interface UnmappedPayoutsResponse {
+  summary: PayoutSummary;
+  items: UnmappedPayoutItem[];
+  total: number;
 }

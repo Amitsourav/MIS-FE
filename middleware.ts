@@ -14,6 +14,10 @@ function isAdminManagementPath(pathname: string): boolean {
   return pathname === "/admin/admins" || pathname.startsWith("/admin/admins/");
 }
 
+function isFmcOnlyAdminPath(pathname: string): boolean {
+  return pathname === "/admin/unassigned-payouts";
+}
+
 // Pure gatekeeping. The proxy + backend remain the real auth authority.
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -56,7 +60,12 @@ export function middleware(req: NextRequest) {
     }
     // Admin-management is super-admin only. A company admin has a non-empty brand
     // cookie; bounce them away. The backend stays the real authority (403/404).
-    if (role === "admin" && brand && isAdminManagementPath(pathname)) {
+    // Unassigned payouts: FMC + super admins (AV has no payouts).
+    if (
+      role === "admin" &&
+      brand &&
+      (isAdminManagementPath(pathname) || (brand !== "fmc" && isFmcOnlyAdminPath(pathname)))
+    ) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/providers";
       url.search = "";

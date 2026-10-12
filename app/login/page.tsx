@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/components/ui/sonner";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -20,7 +19,19 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
+  // useSearchParams needs a Suspense boundary for the static build.
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  // Set by the API client when a request returns 401 (login deactivated,
+  // password reset, or the token expired).
+  const sessionEnded = useSearchParams().get("reason") === "session";
   const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,
@@ -34,8 +45,12 @@ export default function LoginPage() {
       const res = await axios.post<{ role: "provider" | "admin" }>("/api/auth/login", values);
       router.replace(res.data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
+      // 429 = locked out after too many wrong passwords; the backend says for how long.
       if (axios.isAxiosError(err) && err.response?.status === 429) {
-        toast.error("Too many attempts — wait a minute and try again.");
+        setServerError(
+          (err.response.data as { detail?: string })?.detail ||
+            "Too many failed attempts. Try again in 15 minutes.",
+        );
         return;
       }
       const detail =
@@ -57,6 +72,11 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            {sessionEnded && !serverError && (
+              <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                Your session has ended. Please sign in again.
+              </p>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input

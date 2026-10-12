@@ -10,15 +10,16 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// On any 401, the session has expired (or cookies were cleared by the proxy).
-// Hard-redirect to /login so the user re-authenticates.
+// On any 401 the session is over: the token expired, or the login was deactivated
+// or its password reset. The proxy has already cleared the cookies; hard-redirect
+// to /login (which explains why) so the user signs in again.
 api.interceptors.response.use(
   (res) => res,
   (error: AxiosError) => {
     if (typeof window !== "undefined" && error.response?.status === 401) {
       const path = window.location.pathname;
       if (path !== "/login") {
-        window.location.href = "/login";
+        window.location.href = "/login?reason=session";
       }
     }
     return Promise.reject(error);

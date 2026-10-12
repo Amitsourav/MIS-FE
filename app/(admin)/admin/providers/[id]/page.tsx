@@ -3,12 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Plus, Loader2, Copy, Check, KeyRound, Link2 } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Copy, Check, KeyRound, Link2, X } from "lucide-react";
 import {
   useProvider,
   useUpdateProvider,
   useProviderSources,
   useCreateProviderUser,
+  useProviderUsers,
+  useResetProviderPassword,
+  useUnmapSource,
   useCrmSources,
   useMapSource,
   useAdminProviderPayouts,
@@ -43,7 +46,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BRAND_LABELS } from "@/lib/tokens";
-import type { Brand, PayoutFilters, ProviderUserCreated } from "@/lib/types";
+import { date } from "@/lib/format";
+import type {
+  Brand,
+  PayoutFilters,
+  ProviderSourceOut,
+  ProviderUserCreated,
+  ProviderUserOut,
+} from "@/lib/types";
 
 export default function ProviderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -191,11 +201,32 @@ function CopyButton({ value }: { value: string }) {
   );
 }
 
+function TempPassword({ value }: { value: string }) {
+  return (
+    <div className="mt-2 rounded-md bg-amber-50 p-2.5 text-amber-900">
+      <p className="text-xs font-medium">Temporary password — shown once</p>
+      <div className="mt-1.5 flex items-center gap-2">
+        <code className="flex-1 rounded bg-white px-2 py-1 font-mono text-sm">{value}</code>
+        <CopyButton value={value} />
+      </div>
+    </div>
+  );
+}
+
 function LoginsCard({ id }: { id: string }) {
+  const usersQuery = useProviderUsers(id);
+  const { data: users, isLoading } = usersQuery;
   const createUser = useCreateProviderUser(id);
   const [open, setOpen] = useState(false);
   const [emailInput, setEmailInput] = useState("");
-  const [created, setCreated] = useState<ProviderUserCreated[]>([]);
+  // One-time passwords from a create or reset this session, keyed by user id.
+  const [tempPasswords, setTempPasswords] = useState<Record<string, string>>({});
+  const [resetting, setResetting] = useState<ProviderUserOut | null>(null);
+
+  function rememberPassword(user: ProviderUserCreated) {
+    const pw = user.temp_password;
+    if (pw) setTempPasswords((prev) => ({ ...prev, [user.id]: pw }));
+  }
 
   function submit() {
     if (!emailInput) return;
@@ -203,7 +234,7 @@ function LoginsCard({ id }: { id: string }) {
       { email: emailInput },
       {
         onSuccess: (user) => {
-          setCreated((prev) => [user, ...prev]);
+          rememberPassword(user);
           setEmailInput("");
           setOpen(false);
           toast.success("Login created — copy the temporary password now.");
@@ -253,33 +284,127 @@ function LoginsCard({ id }: { id: string }) {
         </Dialog>
       </CardHeader>
       <CardContent className="space-y-3">
-        {created.length === 0 ? (
+        {usersQuery.isError && !users ? (
+          <QueryError
+            className="py-6"
+            error={usersQuery.error}
+            onRetry={() => void usersQuery.refetch()}
+          />
+        ) : isLoading ? (
+          <Skeleton className="h-14 w-full" />
+        ) : (users?.length ?? 0) === 0 ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <KeyRound className="h-4 w-4" />
-            Logins you create this session appear here with their one-time password.
+            No logins yet. Create one to give this provider portal access.
           </p>
         ) : (
-          created.map((u) => (
+          users!.map((u) => (
             <div key={u.id} className="rounded-md border p-3">
-              <p className="text-sm font-medium">{u.email}</p>
-              {u.temp_password ? (
-                <div className="mt-2 rounded-md bg-amber-50 p-2.5 text-amber-900">
-                  <p className="text-xs font-medium">Temporary password — shown once</p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <code className="flex-1 rounded bg-white px-2 py-1 font-mono text-sm">
-                      {u.temp_password}
-                    </code>
-                    <CopyButton value={u.temp_password} />
-                  </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{u.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {u.is_active ? "Active" : "Deactivated"} · created {date(u.created_at)}
+                  </p>
                 </div>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">Password set by admin.</p>
-              )}
+                <Button size="sm" variant="outline" onClick={() => setResetting(u)}>
+                  <KeyRound className="h-4 w-4" />
+                  Reset password
+                </Button>
+              </div>
+              {tempPasswords[u.id] && <TempPassword value={tempPasswords[u.id]} />}
             </div>
           ))
         )}
       </CardContent>
+      <ResetPasswordDialog
+        providerId={id}
+        user={resetting}
+        onClose={() => setResetting(null)}
+        onReset={rememberPassword}
+      />
     </Card>
+  );
+}
+
+// Generate a password (shown once) or set one. Signs out anyone using the old one.
+function ResetPasswordDialog({
+  providerId,
+  user,
+  onClose,
+  onReset,
+}: {
+  providerId: string;
+  user: ProviderUserOut | null;
+  onClose: () => void;
+  onReset: (user: ProviderUserCreated) => void;
+}) {
+  const reset = useResetProviderPassword(providerId);
+  const [password, setPassword] = useState("");
+  const tooShort = password.length > 0 && password.length < 8;
+
+  function close() {
+    setPassword("");
+    onClose();
+  }
+
+  function submit() {
+    if (!user || tooShort) return;
+    reset.mutate(
+      { userId: user.id, password: password || undefined },
+      {
+        onSuccess: (updated) => {
+          onReset(updated);
+          toast.success(
+            updated.temp_password
+              ? "Password reset — copy the temporary password now."
+              : "Password reset.",
+          );
+          close();
+        },
+        onError: (e) => toast.error(errorMessage(e)),
+      },
+    );
+  }
+
+  return (
+    <Dialog open={!!user} onOpenChange={(o) => !o && close()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reset password</DialogTitle>
+          <DialogDescription>
+            {user?.email} will be signed out everywhere and must use the new password.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5 py-4">
+          <Label htmlFor="reset-password">New password (optional)</Label>
+          <Input
+            id="reset-password"
+            type="text"
+            autoComplete="off"
+            placeholder="Leave blank to generate one"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {tooShort ? (
+            <p className="text-xs text-destructive">At least 8 characters.</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              A generated password is shown once, here on this page.
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={close}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={reset.isPending || tooShort}>
+            {reset.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Reset password
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -290,6 +415,22 @@ function SourcesCard({ id }: { id: string }) {
   const crmQuery = useCrmSources(brand);
   const { data: crmSources, isLoading: loadingCrm } = crmQuery;
   const mapSource = useMapSource(id);
+  const unmapSource = useUnmapSource(id);
+  const [removing, setRemoving] = useState<ProviderSourceOut | null>(null);
+
+  function unmap() {
+    if (!removing) return;
+    unmapSource.mutate(
+      { mappingId: removing.id, brand: removing.brand },
+      {
+        onSuccess: () => {
+          toast.success("Source removed");
+          setRemoving(null);
+        },
+        onError: (e) => toast.error(errorMessage(e)),
+      },
+    );
+  }
 
   function map(crmSourceId: string, sourceName: string | null) {
     if (!brand) return;
@@ -333,15 +474,49 @@ function SourcesCard({ id }: { id: string }) {
               {mappings!.map((m) => (
                 <span
                   key={m.id}
-                  className="inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1 text-sm"
+                  className="inline-flex items-center gap-2 rounded-md border bg-muted/40 py-1 pl-2.5 pr-1 text-sm"
                 >
                   <BrandChip brand={m.brand} />
                   {m.source_name ?? m.crm_source_id}
+                  <button
+                    type="button"
+                    title="Remove source"
+                    aria-label={`Remove ${m.source_name ?? m.crm_source_id}`}
+                    onClick={() => setRemoving(m)}
+                    className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </span>
               ))}
             </div>
           )}
         </div>
+
+        <Dialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remove source</DialogTitle>
+              <DialogDescription>
+                Leads and payouts from{" "}
+                <span className="font-medium text-foreground">
+                  {removing?.source_name ?? removing?.crm_source_id}
+                </span>{" "}
+                will stop showing for this provider straight away. You can map it again, here or
+                to another provider.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRemoving(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={unmap} disabled={unmapSource.isPending}>
+                {unmapSource.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Remove source
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Map a new source */}
         <div className="space-y-3 border-t pt-4">
