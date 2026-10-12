@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import { LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function LogoutButton({ collapsed = false }: { collapsed?: boolean }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function logout() {
@@ -17,7 +15,9 @@ export function LogoutButton({ collapsed = false }: { collapsed?: boolean }) {
     } catch {
       // ignore — cookies cleared regardless
     } finally {
-      router.replace("/login");
+      // Full page load, not router.replace: it drops every cached query, so the
+      // next person to log in never sees this user's email or data.
+      window.location.replace("/login");
     }
   }
 

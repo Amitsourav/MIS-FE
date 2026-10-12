@@ -27,7 +27,7 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-      <div className="flex h-14 items-center gap-4 px-4 sm:px-6">
+      <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <BarChart3 className="h-4 w-4" />
@@ -55,7 +55,7 @@ export function Topbar() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           {!ownsDateFilter && <DataAsOf value={overview?.data_as_of} />}
           {/* A provider belongs to one company — show it as a read-only label.
               No switcher: the backend scopes data by the JWT. */}
@@ -73,11 +73,19 @@ export function Topbar() {
               onAllTime={() => setFilters({ all_time: "1", from: undefined, to: undefined })}
             />
           )}
-          <div className="hidden items-center gap-2 border-l pl-3 md:flex">
-            <span className="max-w-[140px] truncate text-sm text-muted-foreground">
-              {me?.provider_name ?? me?.email ?? ""}
+          <div className="flex items-center gap-2 border-l pl-2 sm:pl-3">
+            <span
+              title={me?.provider_name ?? undefined}
+              className="hidden max-w-[180px] truncate text-sm text-muted-foreground md:inline"
+            >
+              {me?.email ?? ""}
             </span>
-            <LogoutButton />
+            <span className="md:hidden">
+              <LogoutButton collapsed />
+            </span>
+            <span className="hidden md:inline">
+              <LogoutButton />
+            </span>
           </div>
         </div>
       </div>

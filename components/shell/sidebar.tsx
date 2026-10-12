@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Trophy, Target, BarChart3, ShieldCheck, Wallet } from "lucide-react";
+import { Users, Trophy, Target, BarChart3, ShieldCheck, Wallet, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/lib/queries";
 import { BRAND_LABELS } from "@/lib/tokens";
@@ -15,7 +16,13 @@ const NAV = [
   { href: "/admin/targets", label: "Targets", icon: Target },
 ];
 // Payouts exist for FundMyCampus only: FMC and super admins.
-const FMC_NAV = [{ href: "/admin/unassigned-payouts", label: "Unassigned payouts", icon: Wallet }];
+const FMC_NAV = [
+  {
+    href: "/admin/unassigned-payouts",
+    label: "Unassigned payouts",
+    icon: Wallet,
+  },
+];
 // Admin-management is super-admin only.
 const SUPER_NAV = [{ href: "/admin/admins", label: "Admins", icon: ShieldCheck }];
 
@@ -23,54 +30,91 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: me } = useMe();
   // Admin whose brand is null = super-admin (sees both companies).
-  const isSuperAdmin = me?.role === "admin" && (me?.brand == null);
+  const isSuperAdmin = me?.role === "admin" && me?.brand == null;
   const seesPayouts = me?.role === "admin" && (me.brand == null || me.brand === "fmc");
   const nav = [...NAV, ...(seesPayouts ? FMC_NAV : []), ...(isSuperAdmin ? SUPER_NAV : [])];
+  // Below md the sidebar is a slide-in menu opened from a slim top bar.
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [pathname]);
+
+  const brandMark = (
+    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <BarChart3 className="h-4 w-4" />
+    </span>
+  );
 
   return (
-    <aside className="flex w-60 flex-col border-r bg-muted/20">
-      <div className="flex h-14 items-center gap-2 border-b px-5 font-semibold">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <BarChart3 className="h-4 w-4" />
-        </span>
+    <>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-4 font-semibold md:hidden">
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={() => setOpen(true)}
+          className="-ml-1 rounded-md p-1.5 text-muted-foreground hover:bg-accent"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        {brandMark}
         MIS Admin
-      </div>
-      {isSuperAdmin ? (
-        <div className="border-b p-3">
-          <CompanySwitcher />
-        </div>
-      ) : (
-        me?.brand && (
-          <div className="border-b px-4 py-2.5 text-xs text-muted-foreground">
-            {BRAND_LABELS[me.brand]}
-          </div>
-        )
+      </header>
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
       )}
-      <nav className="flex-1 space-y-1 p-3">
-        {nav.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="border-t p-3">
-        <p className="mb-2 truncate px-3 text-xs text-muted-foreground">{me?.email ?? ""}</p>
-        <LogoutButton />
-      </div>
-    </aside>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r bg-background transition-transform md:static md:z-auto md:translate-x-0 md:bg-muted/20",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex h-14 items-center gap-2 border-b px-5 font-semibold">
+          {brandMark}
+          MIS Admin
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-accent md:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {isSuperAdmin ? (
+          <div className="border-b p-3">
+            <CompanySwitcher />
+          </div>
+        ) : (
+          me?.brand && (
+            <div className="border-b px-4 py-2.5 text-xs text-muted-foreground">
+              {BRAND_LABELS[me.brand]}
+            </div>
+          )
+        )}
+        <nav className="flex-1 space-y-1 p-3">
+          {nav.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="border-t p-3">
+          <p className="mb-2 truncate px-3 text-xs text-muted-foreground">{me?.email ?? ""}</p>
+          <LogoutButton />
+        </div>
+      </aside>
+    </>
   );
 }

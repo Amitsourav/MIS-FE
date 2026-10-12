@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +28,6 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
   // Set by the API client when a request returns 401 (login deactivated,
   // password reset, or the token expired).
   const sessionEnded = useSearchParams().get("reason") === "session";
@@ -43,7 +42,8 @@ function LoginForm() {
     setServerError(null);
     try {
       const res = await axios.post<{ role: "provider" | "admin" }>("/api/auth/login", values);
-      router.replace(res.data.role === "admin" ? "/admin" : "/dashboard");
+      // Full page load so nothing cached from a previous session (e.g. its email) survives.
+      window.location.replace(res.data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       // 429 = locked out after too many wrong passwords; the backend says for how long.
       if (axios.isAxiosError(err) && err.response?.status === 429) {
