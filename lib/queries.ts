@@ -21,6 +21,8 @@ import type {
   ProviderUserCreated,
   ProviderUserOut,
   UnmappedPayoutsResponse,
+  LeadFunnelResponse,
+  PayoutMonthlyResponse,
   CrmSourceOut,
   LeaderboardRow,
   TargetOut,
@@ -102,6 +104,16 @@ export function useLeads(f: Filters) {
   });
 }
 
+// Loan pipeline (All leads → Login → Sanction → PF paid → Disbursed), by lead created date.
+export function useLeadFunnel(f: Filters) {
+  const params = metricQuery(f);
+  return useQuery({
+    queryKey: ["lead-funnel", params],
+    queryFn: () => get<LeadFunnelResponse>("/me/lead-funnel", params),
+    staleTime: STALE,
+  });
+}
+
 // CRM stages for the Leads filter, scoped like /me/leads (dates/brand, not stage/search).
 export function useStages(f: Filters) {
   const params = metricQuery(f);
@@ -132,6 +144,26 @@ export function usePayouts(filters: PayoutFilters, page: number, pageSize: numbe
       get<PayoutsResponse>("/provider/payouts", payoutParams(filters, page, pageSize)),
     staleTime: STALE,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function usePayoutsMonthly(filters: PayoutFilters) {
+  const params = payoutParams(filters);
+  return useQuery({
+    queryKey: ["payouts-monthly", params],
+    queryFn: () => get<PayoutMonthlyResponse>("/provider/payouts/monthly", params),
+    staleTime: STALE,
+  });
+}
+
+export function useAdminProviderPayoutsMonthly(providerId: string, filters: PayoutFilters) {
+  const params = payoutParams(filters);
+  return useQuery({
+    queryKey: ["admin", "provider", providerId, "payouts-monthly", params],
+    queryFn: () =>
+      get<PayoutMonthlyResponse>(`/admin/providers/${providerId}/payouts/monthly`, params),
+    staleTime: STALE,
+    enabled: !!providerId,
   });
 }
 
@@ -288,6 +320,7 @@ function invalidateAfterMapping(qc: QueryClient, providerId: string, brand: Bran
   qc.invalidateQueries({ queryKey: ["provider-sources", providerId] });
   qc.invalidateQueries({ queryKey: ["crm-sources", brand] });
   qc.invalidateQueries({ queryKey: ["admin", "provider", providerId, "payouts"] });
+  qc.invalidateQueries({ queryKey: ["admin", "provider", providerId, "payouts-monthly"] });
   qc.invalidateQueries({ queryKey: ["leaderboard"] });
   qc.invalidateQueries({ queryKey: ["admin", "payouts", "unmapped"] });
 }

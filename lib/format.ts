@@ -109,3 +109,13 @@ export function ratePct(rate: string | null | undefined): string | null {
 export function isPositive(value: string | null | undefined): boolean {
   return value != null && Number(value) > 0;
 }
+
+/** Compact rupees for chart axes: 12000 -> "₹12K", 150000 -> "₹1.5L", 2.5e7 -> "₹2.5Cr". */
+export function inrCompact(n: number): string {
+  const abs = Math.abs(n);
+  const short = (v: number) => `${Number(v.toFixed(1))}`;
+  if (abs >= 1e7) return `₹${short(n / 1e7)}Cr`;
+  if (abs >= 1e5) return `₹${short(n / 1e5)}L`;
+  if (abs >= 1e3) return `₹${short(n / 1e3)}K`;
+  return `₹${short(n)}`;
+}

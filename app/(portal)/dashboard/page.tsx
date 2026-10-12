@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck, Trophy } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
-import { useOverview, useTrends, useBrandSplit, useQuality } from "@/lib/queries";
+import { useOverview, useTrends, useBrandSplit, useQuality, useLeadFunnel } from "@/lib/queries";
 import { KpiCard, KpiCardSkeleton } from "@/components/kpi-card";
 import { GradeBadge } from "@/components/grade-badge";
 import { FunnelChart } from "@/components/charts/funnel-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { BrandSplitChart } from "@/components/charts/brand-split-chart";
 import { QualityPanel } from "@/components/charts/quality-panel";
+import { LeadFunnelChart } from "@/components/charts/lead-funnel-chart";
+import { Button } from "@/components/ui/button";
 import { ScorecardPanel } from "@/components/scorecard-panel";
 import { EmptyState } from "@/components/empty-state";
 import { ChartSkeleton, PanelSkeleton } from "@/components/skeletons";
@@ -19,19 +21,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { int, pct, ratio } from "@/lib/format";
 
 export default function DashboardPage() {
-  const { filters } = useUrlFilters();
+  const { filters, setFilters } = useUrlFilters();
   const [granularity, setGranularity] = useState<"day" | "week">("day");
 
   const overview = useOverview(filters);
   const trends = useTrends(filters, granularity);
   const brandSplit = useBrandSplit(filters);
   const quality = useQuality(filters);
+  const leadFunnel = useLeadFunnel(filters);
 
   // Each panel keeps its last good data if a live refresh fails.
   const ov = useLastGood(overview);
   const tr = useLastGood(trends);
   const bs = useLastGood(brandSplit);
   const ql = useLastGood(quality);
+  const lf = useLastGood(leadFunnel);
 
   const o = ov.data;
   const showBrandSplit = (bs.data?.rows.length ?? 0) > 1;
@@ -64,6 +68,7 @@ export default function DashboardPage() {
             void trends.refetch();
             void brandSplit.refetch();
             void quality.refetch();
+            void leadFunnel.refetch();
           }}
         />
       ) : (
@@ -119,6 +124,31 @@ export default function DashboardPage() {
               </>
             )}
           </div>
+
+          {/* Loan pipeline (FundMyCampus only: hidden when brand_supported is false) */}
+          {lf.error ? (
+            cardError(lf.error, leadFunnel.refetch)
+          ) : !lf.data ? (
+            <ChartSkeleton height={236} />
+          ) : !lf.data.brand_supported ? null : (lf.data.steps[0]?.count ?? 0) === 0 ? (
+            <Card>
+              <CardContent className="py-2">
+                <EmptyState title="No leads in this date range" className="border-0">
+                  {!filters.allTime && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFilters({ all_time: "1", from: undefined, to: undefined })}
+                    >
+                      Show all time
+                    </Button>
+                  )}
+                </EmptyState>
+              </CardContent>
+            </Card>
+          ) : (
+            <LeadFunnelChart steps={lf.data.steps} />
+          )}
 
           {/* Empty state for the range */}
           {o && o.funnel.delivered === 0 ? (

@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useUrlFilters } from "@/lib/use-filters";
-import { usePayouts, payoutsExportUrl } from "@/lib/queries";
+import { usePayouts, usePayoutsMonthly, payoutsExportUrl } from "@/lib/queries";
 import { PayoutsPanel } from "@/components/payouts/payouts-panel";
 import { PAGE_SIZES } from "@/components/pagination";
 import type { PayoutFilters } from "@/lib/types";
@@ -33,6 +33,7 @@ export default function PayoutPage() {
   const { setFilters } = useUrlFilters(); // URL writer; resets page unless the patch sets it
   const { filters, page, pageSize } = readPayoutParams(new URLSearchParams(searchParams.toString()));
   const query = usePayouts(filters, page, pageSize);
+  const monthlyQuery = usePayoutsMonthly(filters);
 
   return (
     <div className="space-y-4">
@@ -45,6 +46,7 @@ export default function PayoutPage() {
 
       <PayoutsPanel
         query={query}
+        monthlyQuery={monthlyQuery}
         filters={filters}
         onFiltersChange={(f) =>
           setFilters({ from: f.date_from, to: f.date_to, all_time: undefined })

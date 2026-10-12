@@ -13,13 +13,18 @@ import { PayoutsNone, PayoutsUnsupported } from "./payout-empty";
 import { QueryError } from "@/components/query-error";
 import { statusOf } from "@/lib/api";
 import { useLastGood } from "@/lib/use-last-good";
-import type { PayoutFilters, PayoutsResponse } from "@/lib/types";
+import { PayoutMonthlyChart } from "@/components/charts/payout-monthly-chart";
+import { ChartSkeleton } from "@/components/skeletons";
+import { Card, CardContent } from "@/components/ui/card";
+import { isPositive } from "@/lib/format";
+import type { PayoutFilters, PayoutMonthlyResponse, PayoutsResponse } from "@/lib/types";
 
 // Shared by the provider Payout page and the admin provider "Payouts" tab.
 // The parent owns filter/paging state (URL for providers, local for admins) and the
 // query; this renders every state from that. `exportHref` omitted = no Export button.
 export function PayoutsPanel({
   query,
+  monthlyQuery,
   filters,
   onFiltersChange,
   page,
@@ -29,6 +34,7 @@ export function PayoutsPanel({
   exportHref,
 }: {
   query: UseQueryResult<PayoutsResponse>;
+  monthlyQuery: UseQueryResult<PayoutMonthlyResponse>;
   filters: PayoutFilters;
   onFiltersChange: (f: PayoutFilters) => void;
   page: number;
@@ -99,6 +105,7 @@ export function PayoutsPanel({
       ) : (
         <>
           <PayoutKpis summary={data.summary} />
+          <MonthlySection query={monthlyQuery} />
           <PayoutTable items={data.items} loading={false} />
           <Pagination
             page={page}
@@ -117,4 +124,31 @@ export function PayoutsPanel({
       </p>
     </div>
   );
+}
+
+// Revenue vs Disbursement card, same date filter as the table. Hidden for brands
+// without payouts, and when there are no months and no note to show.
+function MonthlySection({ query }: { query: UseQueryResult<PayoutMonthlyResponse> }) {
+  const { data, error } = useLastGood(query, "Couldn't refresh payouts");
+  if (!data) {
+    if (error) {
+      return (
+        <Card>
+          <CardContent className="py-2">
+            <QueryError
+              className="border-0"
+              error={error}
+              title="Couldn't load the monthly chart"
+              onRetry={() => void query.refetch()}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+    return <ChartSkeleton />;
+  }
+  if (!data.brand_supported) return null;
+  const hasNotes = data.revenue_dated_by_first_release > 0 || isPositive(data.revenue_undated);
+  if (data.months.length === 0 && !hasNotes) return null;
+  return <PayoutMonthlyChart data={data} />;
 }

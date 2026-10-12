@@ -122,6 +122,19 @@ export interface LeadOut {
   created_at: string | null;
 }
 
+// --- loan pipeline (GET /me/lead-funnel, FundMyCampus only) ---
+export interface FunnelStep {
+  key: "all" | "logged_in" | "sanctioned" | "pf_paid" | "disbursed";
+  label: string; // "All leads" | "Login" | "Sanction" | "PF paid" | "Disbursed"
+  count: number; // leads that reached this step or went further
+}
+export interface LeadFunnelResponse {
+  brand_supported: boolean;
+  date_from: string | null;
+  date_to: string | null;
+  steps: FunnelStep[]; // the 5 steps in order when supported; [] otherwise
+}
+
 // A CRM stage for the Leads filter, in the CRM's own order (GET /me/stages).
 export interface CrmStageOption {
   value: string; // sent back as crm_stage=
@@ -242,6 +255,21 @@ export interface PayoutsResponse {
   page_size: number;
   total: number; // rows (student × lender), for pagination
   data_as_of: string | null;
+}
+
+// Revenue vs Disbursement by month (GET /provider/payouts/monthly).
+export interface MonthlyPayoutPoint {
+  month: string; // "YYYY-MM"
+  revenue: MoneyString; // full sanctioned payout, in the sanction month
+  disbursement: MoneyString; // earned on released money, in each release month
+}
+export interface PayoutMonthlyResponse {
+  brand_supported: boolean;
+  months: MonthlyPayoutPoint[]; // oldest first, continuous (empty months are "0.00")
+  revenue_total: MoneyString;
+  disbursement_total: MoneyString;
+  revenue_dated_by_first_release: number; // loans with no sanction date, shown in first release month
+  revenue_undated: MoneyString; // in revenue_total but in no month
 }
 
 export interface PayoutFilters {

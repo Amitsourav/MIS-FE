@@ -15,6 +15,7 @@ import {
   useCrmSources,
   useMapSource,
   useAdminProviderPayouts,
+  useAdminProviderPayoutsMonthly,
 } from "@/lib/queries";
 import { errorMessage, statusOf } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -595,10 +596,12 @@ function PayoutsTab({ id }: { id: string }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const query = useAdminProviderPayouts(id, filters, page, pageSize);
+  const monthlyQuery = useAdminProviderPayoutsMonthly(id, filters);
 
   return (
     <PayoutsPanel
       query={query}
+      monthlyQuery={monthlyQuery}
       filters={filters}
       onFiltersChange={(f) => {
         setFilters(f);
