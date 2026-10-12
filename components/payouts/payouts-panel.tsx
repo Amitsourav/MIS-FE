@@ -73,7 +73,7 @@ export function PayoutsPanel({
             onChange={(r) => onFiltersChange({ date_from: r.from, date_to: r.to })}
             onAllTime={() => onFiltersChange({})}
           />
-          <span className="text-xs text-muted-foreground">Filtered by PF-paid date</span>
+          <span className="text-xs text-muted-foreground">Filtered by release date</span>
         </div>
         <div className="flex items-center gap-3">
           <DataAsOf value={data.data_as_of} />
@@ -112,9 +112,8 @@ export function PayoutsPanel({
       )}
 
       <p className="text-xs text-muted-foreground">
-        You earn your agreed rate on the loan amount once the student pays the processing fee to
-        the lender. Sanctioned loans appear here once PF is paid. &lsquo;Paid&rsquo; is what
-        FundMyCampus has paid you.
+        You earn your rate on the amount the bank has released, and it grows with each tranche.
+        &lsquo;Paid&rsquo; is what FundMyCampus has paid you.
       </p>
     </div>
   );

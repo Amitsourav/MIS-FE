@@ -17,7 +17,7 @@ export function PayoutsNone({ onShowAllTime }: { onShowAllTime?: () => void }) {
     <EmptyState
       icon={<Wallet className="h-5 w-5" />}
       title="No earnings yet"
-      description="They appear here once a student you sent pays the processing fee to a lender."
+      description="They appear here once a bank releases a loan for a student you sent."
     >
       {onShowAllTime && (
         <Button variant="outline" size="sm" onClick={onShowAllTime}>

@@ -222,8 +222,10 @@ export interface PayoutItem {
   full_name: string | null;
   bank_name: string | null;
   loan_amount: MoneyString | null; // sanctioned by this lender
-  pf_paid_on: string | null; // YYYY-MM-DD — the date the payout is earned
-  disbursed_total: MoneyString; // information only
+  pf_paid_on: string | null; // information only; no longer the earning date
+  first_disbursed_on: string | null; // YYYY-MM-DD — the bank's first release
+  last_disbursed_on: string | null; // YYYY-MM-DD — latest release: the row's date (sort + filter)
+  disbursed_total: MoneyString; // released so far — the payout basis
   payout_basis: PayoutBasis;
   payout_rate: string | null; // percent, e.g. "0.60"; null when basis = "agreed"
   earned: MoneyString;

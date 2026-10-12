@@ -10,7 +10,7 @@ import type { PayoutItem } from "@/lib/types";
 type Row = PayoutItem & { source_name?: string | null };
 const MONEY = "text-right tabular-nums whitespace-nowrap";
 
-// One row per student × lender, in server order (PF paid, newest first).
+// One row per student × lender, in server order (last released, newest first).
 // Headers are deliberately plain: there is no client-side sorting.
 // `showSource` adds a CRM source column (admin "Unassigned payouts").
 export function PayoutTable({
@@ -33,17 +33,17 @@ export function PayoutTable({
             <TableHead>Student</TableHead>
             <TableHead>Lender</TableHead>
             <TableHead className="text-right">Loan amount</TableHead>
-            <TableHead className="whitespace-nowrap">PF paid on</TableHead>
+            <TableHead
+              className="whitespace-nowrap text-right"
+              title="What the bank has released so far. Your payout is your rate on this."
+            >
+              Disbursed so far
+            </TableHead>
+            <TableHead className="whitespace-nowrap">Last released on</TableHead>
             <TableHead>Rate</TableHead>
             <TableHead className="text-right">Earned</TableHead>
             <TableHead className="text-right">Paid</TableHead>
             <TableHead className="text-right">Pending</TableHead>
-            <TableHead
-              className="whitespace-nowrap text-right"
-              title="Information only: what the lender has released so far. Not the basis of your payout."
-            >
-              Disbursed so far
-            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -61,8 +61,9 @@ export function PayoutTable({
                 <TableCell className="font-medium">{row.full_name ?? "—"}</TableCell>
                 <TableCell className="whitespace-nowrap">{row.bank_name ?? "—"}</TableCell>
                 <TableCell className={MONEY}>{inr(row.loan_amount)}</TableCell>
+                <TableCell className={MONEY}>{inr(row.disbursed_total)}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {date(row.pf_paid_on)}
+                  {date(row.last_disbursed_on)}
                 </TableCell>
                 <TableCell>
                   {row.payout_basis === "agreed" ? (
@@ -84,9 +85,6 @@ export function PayoutTable({
                       Overpaid {inr(row.overpaid)}
                     </span>
                   )}
-                </TableCell>
-                <TableCell className={cn(MONEY, "text-muted-foreground")}>
-                  {inr(row.disbursed_total)}
                 </TableCell>
               </TableRow>
             ))

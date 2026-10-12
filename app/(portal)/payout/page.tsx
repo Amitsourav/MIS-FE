@@ -39,7 +39,7 @@ export default function PayoutPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Payout</h1>
         <p className="text-sm text-muted-foreground">
-          What you have earned on students who have paid the processing fee to a lender.
+          What you have earned on the loan amounts banks have released for your students.
         </p>
       </div>
 

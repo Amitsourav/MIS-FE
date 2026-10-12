@@ -35,7 +35,7 @@ export function PayoutKpis({ summary }: { summary: PayoutSummary }) {
         />
       )}
       <KpiCard
-        label="Students (PF paid)"
+        label="Students"
         value={int(summary.students)}
         sub={`${inr(summary.loan_total)} in loans`}
         icon={<GraduationCap className="h-4 w-4" />}
