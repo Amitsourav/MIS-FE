@@ -105,9 +105,23 @@ export function ratePct(rate: string | null | undefined): string | null {
   return Number.isFinite(n) ? `${n}%` : null;
 }
 
+/** Signed money: "+₹6,558" / "−₹1,209.41" / "₹0". Display only. */
+export function signedInr(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  if (n === 0) return inr("0.00");
+  return (n > 0 ? "+" : "−") + inr(value.replace("-", ""));
+}
+
 /** True when a money string is above "0.00" (a comparison only — no arithmetic). */
 export function isPositive(value: string | null | undefined): boolean {
   return value != null && Number(value) > 0;
+}
+
+/** True when a money string is below "0.00" (comparison only). */
+export function isNegative(value: string | null | undefined): boolean {
+  return value != null && Number(value) < 0;
 }
 
 /** Compact rupees for chart axes: 12000 -> "₹12K", 150000 -> "₹1.5L", 2.5e7 -> "₹2.5Cr". */

@@ -226,9 +226,19 @@ export interface PayoutSummary {
   loan_total: MoneyString;
   earned: MoneyString;
   paid: MoneyString;
-  pending: MoneyString;
-  overpaid: MoneyString; // paid beyond earned; "0.00" normally
+  pending: MoneyString; // still to pay, per student (never negative)
+  overpaid: MoneyString; // paid above earned, per student (never negative)
+  balance: MoneyString; // earned − paid, SIGNED: + FMC still owes, − FMC paid extra
+  // "Where your money is" pie: these 5 add up exactly to `earned`.
+  cash_transferred: MoneyString; // paid (up to earned) minus TDS
+  tds: MoneyString;
+  invoice_not_raised: MoneyString; // pending, no bill yet
+  invoice_raised: MoneyString; // pending, on a bill not yet due
+  invoice_overdue: MoneyString; // pending, on a bill past its due date
 }
+
+export type InvoiceStatus = "raised" | "paid" | "cancelled";
+export type InvoiceState = "not_raised" | "raised" | "overdue";
 
 export interface PayoutItem {
   serial_no: number | null;
@@ -245,6 +255,16 @@ export interface PayoutItem {
   paid: MoneyString;
   pending: MoneyString;
   overpaid: MoneyString; // paid beyond earned; "0.00" normally
+  balance: MoneyString; // earned − paid, signed
+  tds: MoneyString;
+  net_paid: MoneyString; // paid − TDS
+  paid_on: string | null; // FMC's latest payment date
+  invoice_number: string | null; // the student's latest partner bill
+  invoice_amount: MoneyString | null;
+  invoice_date: string | null;
+  invoice_due_date: string | null;
+  invoice_status: InvoiceStatus | null;
+  invoice_state: InvoiceState; // where this row's pending sits
 }
 
 export interface PayoutsResponse {

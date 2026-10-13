@@ -59,7 +59,7 @@ export default function UnassignedPayoutsPage() {
         />
       ) : (
         <>
-          <PayoutKpis summary={data.summary} />
+          <PayoutKpis summary={data.summary} viewer="admin" />
           <PayoutTable items={data.items} loading={false} showSource />
           <p className="text-xs text-muted-foreground">{data.total} rows</p>
         </>

@@ -602,6 +602,7 @@ function PayoutsTab({ id }: { id: string }) {
     <PayoutsPanel
       query={query}
       monthlyQuery={monthlyQuery}
+      viewer="admin"
       filters={filters}
       onFiltersChange={(f) => {
         setFilters(f);

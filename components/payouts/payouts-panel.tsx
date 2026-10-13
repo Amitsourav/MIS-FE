@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Pagination } from "@/components/pagination";
 import { DateRangePicker } from "@/components/shell/date-range-picker";
 import { DataAsOf } from "@/components/shell/data-as-of";
-import { PayoutKpis, PayoutKpisSkeleton } from "./payout-kpis";
+import { PayoutKpis, PayoutKpisSkeleton, type PayoutViewer } from "./payout-kpis";
+import { PayoutStatusPie } from "@/components/charts/payout-status-pie";
 import { PayoutTable } from "./payout-table";
 import { PayoutsNone, PayoutsUnsupported } from "./payout-empty";
 import { QueryError } from "@/components/query-error";
@@ -32,6 +33,7 @@ export function PayoutsPanel({
   onPageChange,
   onPageSizeChange,
   exportHref,
+  viewer = "partner",
 }: {
   query: UseQueryResult<PayoutsResponse>;
   monthlyQuery: UseQueryResult<PayoutMonthlyResponse>;
@@ -42,6 +44,7 @@ export function PayoutsPanel({
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   exportHref?: string;
+  viewer?: PayoutViewer;
 }) {
   // Keeps the last good response on screen (with a toast) if a refresh fails.
   const { data, error } = useLastGood(query, "Couldn't refresh payouts");
@@ -104,8 +107,14 @@ export function PayoutsPanel({
         <PayoutsNone onShowAllTime={allTime ? undefined : () => onFiltersChange({})} />
       ) : (
         <>
-          <PayoutKpis summary={data.summary} />
-          <MonthlySection query={monthlyQuery} />
+          <PayoutKpis summary={data.summary} viewer={viewer} />
+          {/* Bar graph and "Where your money is" side by side on desktop, stacked on mobile. */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
+              <MonthlySection query={monthlyQuery} />
+            </div>
+            {isPositive(data.summary.earned) && <PayoutStatusPie summary={data.summary} />}
+          </div>
           <PayoutTable items={data.items} loading={false} />
           <Pagination
             page={page}

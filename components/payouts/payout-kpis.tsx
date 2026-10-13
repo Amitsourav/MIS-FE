@@ -1,20 +1,40 @@
-import { IndianRupee, Wallet, Hourglass, GraduationCap, AlertTriangle } from "lucide-react";
+import {
+  IndianRupee,
+  Wallet,
+  Hourglass,
+  GraduationCap,
+  AlertTriangle,
+  Scale,
+} from "lucide-react";
 import { KpiCard, KpiCardSkeleton } from "@/components/kpi-card";
-import { inr, int, isPositive } from "@/lib/format";
+import { inr, int, isNegative, isPositive, signedInr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PayoutSummary } from "@/lib/types";
 
+export type PayoutViewer = "partner" | "admin";
+
 // Totals come straight from the backend summary (covers the whole filtered set,
 // not just the current page). Never sum rows on the client.
-export function PayoutKpis({ summary }: { summary: PayoutSummary }) {
+// Order: Earned · Paid · Pending · Overpaid (only if > 0) · Balance · Students.
+export function PayoutKpis({
+  summary,
+  viewer = "partner",
+}: {
+  summary: PayoutSummary;
+  viewer?: PayoutViewer;
+}) {
   const hasPending = isPositive(summary.pending);
-  // Paid beyond earned (pending can't go below zero). Only shown when it happens.
+  // Paid above earned (pending can't go below zero). Only shown when it happens.
   const hasOverpaid = isPositive(summary.overpaid);
+  // Signed net: + FMC still owes, − FMC paid extra (cut from the next bill).
+  const hasBalance = summary.balance != null;
+  const cards = 4 + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
+
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-4 sm:grid-cols-2",
-        hasOverpaid ? "lg:grid-cols-5" : "lg:grid-cols-4",
+        "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+        cards === 6 ? "xl:grid-cols-6" : cards === 5 ? "xl:grid-cols-5" : "xl:grid-cols-4",
       )}
     >
       <KpiCard label="Earned" value={inr(summary.earned)} icon={<IndianRupee className="h-4 w-4" />} />
@@ -29,9 +49,32 @@ export function PayoutKpis({ summary }: { summary: PayoutSummary }) {
         <KpiCard
           label="Overpaid"
           value={inr(summary.overpaid)}
-          sub="Paid beyond what was earned"
+          sub="paid above earnings"
           accent="text-destructive"
           icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+        />
+      )}
+      {hasBalance && (
+        <KpiCard
+          label="Balance"
+          value={signedInr(summary.balance)}
+          sub={
+            isPositive(summary.balance)
+              ? viewer === "admin"
+                ? "still to pay"
+                : "still to be paid to you"
+              : isNegative(summary.balance)
+                ? "paid extra — adjusts on next bill"
+                : "settled"
+          }
+          accent={
+            isPositive(summary.balance)
+              ? "text-emerald-600"
+              : isNegative(summary.balance)
+                ? "text-destructive"
+                : undefined
+          }
+          icon={<Scale className="h-4 w-4" />}
         />
       )}
       <KpiCard
@@ -46,8 +89,8 @@ export function PayoutKpis({ summary }: { summary: PayoutSummary }) {
 
 export function PayoutKpisSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {Array.from({ length: 5 }).map((_, i) => (
         <KpiCardSkeleton key={i} />
       ))}
     </div>
