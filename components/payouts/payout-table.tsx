@@ -10,6 +10,27 @@ import type { PayoutItem } from "@/lib/types";
 type Row = PayoutItem & { source_name?: string | null };
 
 const MONEY = "text-right tabular-nums whitespace-nowrap";
+const HEAD = "h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-slate-500";
+
+// A stable colour per student for the initials avatar.
+const AVATARS = [
+  "bg-indigo-100 text-indigo-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-800",
+  "bg-rose-100 text-rose-700",
+  "bg-violet-100 text-violet-700",
+  "bg-teal-100 text-teal-700",
+];
+function avatarFor(name: string) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return AVATARS[h % AVATARS.length];
+}
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
 const SUB = "block text-xs font-normal text-muted-foreground";
 
 // One row per student × lender, in server order (last released, newest first).
@@ -20,43 +41,45 @@ export function PayoutTable({
   items,
   loading,
   showSource = false,
+  bare = false,
 }: {
   items: Row[];
   loading: boolean;
   showSource?: boolean;
+  bare?: boolean; // no own border: the parent card provides it
 }) {
   const showTds = items.some((r) => isPositive(r.tds));
   const cols = 13 + (showSource ? 1 : 0) + (showTds ? 2 : 0);
   return (
-    <div className="rounded-lg border bg-background">
+    <div className={cn("bg-card", !bare && "overflow-hidden rounded-xl border shadow-sm")}>
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-16">#</TableHead>
-            {showSource && <TableHead>Source</TableHead>}
-            <TableHead>Student</TableHead>
-            <TableHead>Lender</TableHead>
-            <TableHead className="text-right">Loan amount</TableHead>
+        <TableHeader className="bg-slate-50/80">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className={cn(HEAD, "w-16")}>#</TableHead>
+            {showSource && <TableHead className={HEAD}>Source</TableHead>}
+            <TableHead className={HEAD}>Student</TableHead>
+            <TableHead className={HEAD}>Lender</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Loan amount</TableHead>
             <TableHead
-              className="whitespace-nowrap text-right"
+              className={cn(HEAD, "whitespace-nowrap text-right")}
               title="What the bank has released so far. Your payout is your rate on this."
             >
               Disbursed so far
             </TableHead>
-            <TableHead>Rate</TableHead>
-            <TableHead className="text-right">Earned</TableHead>
-            <TableHead className="text-right">Paid</TableHead>
-            {showTds && <TableHead className="text-right">TDS</TableHead>}
-            {showTds && <TableHead className="whitespace-nowrap text-right">Net paid</TableHead>}
-            <TableHead className="text-right">Pending</TableHead>
+            <TableHead className={HEAD}>Rate</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Earned</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
+            {showTds && <TableHead className={cn(HEAD, "text-right")}>TDS</TableHead>}
+            {showTds && <TableHead className={cn(HEAD, "whitespace-nowrap text-right")}>Net paid</TableHead>}
+            <TableHead className={cn(HEAD, "text-right")}>Pending</TableHead>
             <TableHead
-              className="text-right"
+              className={cn(HEAD, "text-right")}
               title="Earned − paid. + still to be paid; − paid extra, adjusted on the next bill."
             >
               Balance
             </TableHead>
-            <TableHead>Invoice</TableHead>
-            <TableHead className="whitespace-nowrap">Last released on</TableHead>
+            <TableHead className={HEAD}>Invoice</TableHead>
+            <TableHead className={cn(HEAD, "whitespace-nowrap")}>Last released on</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,27 +87,58 @@ export function PayoutTable({
             <TableRowsSkeleton rows={6} cols={cols} />
           ) : (
             items.map((row, i) => (
-              <TableRow key={`${row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}>
+              <TableRow
+                key={`${row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}
+                className="even:bg-slate-50/40 hover:bg-indigo-50/40"
+              >
                 <TableCell className="tabular-nums text-muted-foreground">
                   {row.serial_no ?? "—"}
                 </TableCell>
                 {showSource && (
                   <TableCell className="whitespace-nowrap">{row.source_name ?? "—"}</TableCell>
                 )}
-                <TableCell className="font-medium">{row.full_name ?? "—"}</TableCell>
-                <TableCell className="whitespace-nowrap">{row.bank_name ?? "—"}</TableCell>
+                <TableCell>
+                  {row.full_name ? (
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={cn(
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                          avatarFor(row.full_name),
+                        )}
+                      >
+                        {initials(row.full_name)}
+                      </span>
+                      <span className="font-medium text-slate-900">{row.full_name}</span>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {row.bank_name ? (
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      {row.bank_name}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
                 <TableCell className={MONEY}>{inr(row.loan_amount)}</TableCell>
                 <TableCell className={MONEY}>{inr(row.disbursed_total)}</TableCell>
                 <TableCell>
                   {row.payout_basis === "agreed" ? (
-                    <Badge variant="secondary" className="font-medium">
+                    <Badge className="border-transparent bg-violet-100 font-medium text-violet-700 hover:bg-violet-100">
                       Agreed
                     </Badge>
                   ) : (
-                    <span className="tabular-nums">{ratePct(row.payout_rate) ?? "—"}</span>
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-indigo-700 ring-1 ring-indigo-100">
+                      {ratePct(row.payout_rate) ?? "—"}
+                    </span>
                   )}
                 </TableCell>
-                <TableCell className={cn(MONEY, "font-medium")}>{inr(row.earned)}</TableCell>
+                <TableCell className={cn(MONEY, "font-semibold text-slate-900")}>
+                  {inr(row.earned)}
+                </TableCell>
                 <TableCell className={MONEY}>
                   {inr(row.paid)}
                   {row.paid_on && <span className={SUB}>on {date(row.paid_on)}</span>}
@@ -101,17 +155,21 @@ export function PayoutTable({
                     </span>
                   )}
                 </TableCell>
-                <TableCell
-                  className={cn(
-                    MONEY,
-                    "font-medium",
-                    isPositive(row.balance) && "text-emerald-600",
-                    isNegative(row.balance) && "text-destructive",
+                <TableCell className={MONEY}>
+                  {isPositive(row.balance) || isNegative(row.balance) ? (
+                    <span
+                      className={cn(
+                        "inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1",
+                        isPositive(row.balance)
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                          : "bg-rose-50 text-rose-700 ring-rose-100",
+                      )}
+                    >
+                      {signedInr(row.balance)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
                   )}
-                >
-                  {isPositive(row.balance) || isNegative(row.balance)
-                    ? signedInr(row.balance)
-                    : "—"}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <InvoiceCell row={row} />
@@ -150,7 +208,9 @@ function InvoiceCell({ row }: { row: Row }) {
       </Badge>
     );
   } else if (row.invoice_state === "not_raised" && pending) {
-    badge = <Badge variant="secondary" className="font-medium">Not raised</Badge>;
+    badge = (
+      <Badge className={cn(BADGE, "bg-sky-100 text-sky-700 hover:bg-sky-100")}>Not raised</Badge>
+    );
   }
 
   if (!badge && !row.invoice_number) return <span className="text-muted-foreground">—</span>;

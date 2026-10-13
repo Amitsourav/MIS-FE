@@ -1,7 +1,10 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart as PieIcon } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { SectionTitle } from "@/components/payouts/stat-card";
+import { cn } from "@/lib/utils";
 import { inr, isNegative, isPositive, pct, signedInr } from "@/lib/format";
 import type { PayoutSummary } from "@/lib/types";
 
@@ -23,10 +26,14 @@ export function PayoutStatusPie({ summary }: { summary: PayoutSummary }) {
     .map((s) => ({ ...s, amount: Number(s.value) }));
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <CardTitle>Where your money is</CardTitle>
-        <CardDescription>Your earnings, by what&rsquo;s happened to them.</CardDescription>
+    <Card className="flex flex-col rounded-xl">
+      <CardHeader className="pb-2">
+        <SectionTitle
+          tone="emerald"
+          icon={<PieIcon className="h-4 w-4" />}
+          title="Where your money is"
+          description="Your earnings, by what’s happened to them."
+        />
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-4">
         <div className="relative mx-auto h-[200px] w-full max-w-[240px]">
@@ -56,19 +63,30 @@ export function PayoutStatusPie({ summary }: { summary: PayoutSummary }) {
             </PieChart>
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-lg font-bold tabular-nums">{inr(summary.earned)}</span>
-            <span className="text-xs text-muted-foreground">Total earned</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Total earned
+            </span>
+            <span className="text-lg font-bold tabular-nums text-slate-900">
+              {inr(summary.earned)}
+            </span>
           </div>
         </div>
 
-        <ul className="space-y-1.5 text-sm">
+        <ul className="space-y-2 text-sm">
           {slices.map((s) => (
-            <li key={s.key} className="flex flex-wrap items-center gap-x-2">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
-              <span>{s.label}</span>
-              <span className="ml-auto tabular-nums">
-                {inr(s.value)}
-                <span className="ml-2 text-xs text-muted-foreground">
+            <li
+              key={s.key}
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-2"
+              style={{ backgroundColor: `${s.color}14` }}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
+              <span className="font-medium text-slate-700">{s.label}</span>
+              <span className="ml-auto flex items-center gap-2 tabular-nums">
+                <span className="font-semibold text-slate-900">{inr(s.value)}</span>
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: s.color }}
+                >
                   {earned > 0 ? pct(s.amount / earned) : "—"}
                 </span>
               </span>
@@ -77,9 +95,9 @@ export function PayoutStatusPie({ summary }: { summary: PayoutSummary }) {
         </ul>
 
         {(isPositive(summary.overpaid) || summary.balance != null) && (
-          <div className="space-y-1 border-t pt-3 text-xs">
+          <div className="space-y-1.5 border-t pt-3 text-xs">
             {isPositive(summary.overpaid) && (
-              <p className="text-destructive">
+              <p className={cn("rounded-md bg-rose-50 px-2.5 py-1.5 font-medium text-rose-700")}>
                 {inr(summary.overpaid)} paid above earnings — adjusts on the next bill.
               </p>
             )}

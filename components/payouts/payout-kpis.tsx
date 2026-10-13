@@ -6,7 +6,8 @@ import {
   AlertTriangle,
   Scale,
 } from "lucide-react";
-import { KpiCard, KpiCardSkeleton } from "@/components/kpi-card";
+import { KpiCardSkeleton } from "@/components/kpi-card";
+import { StatCard } from "./stat-card";
 import { inr, int, isNegative, isPositive, signedInr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PayoutSummary } from "@/lib/types";
@@ -37,25 +38,38 @@ export function PayoutKpis({
         cards === 6 ? "xl:grid-cols-6" : cards === 5 ? "xl:grid-cols-5" : "xl:grid-cols-4",
       )}
     >
-      <KpiCard label="Earned" value={inr(summary.earned)} icon={<IndianRupee className="h-4 w-4" />} />
-      <KpiCard label="Paid" value={inr(summary.paid)} icon={<Wallet className="h-4 w-4" />} />
-      <KpiCard
+      <StatCard
+        tone="indigo"
+        label="Earned"
+        value={inr(summary.earned)}
+        sub="on money the bank has released"
+        icon={<IndianRupee className="h-4 w-4" />}
+      />
+      <StatCard
+        tone="emerald"
+        label="Paid"
+        value={inr(summary.paid)}
+        sub="by FundMyCampus"
+        icon={<Wallet className="h-4 w-4" />}
+      />
+      <StatCard
+        tone={hasPending ? "amber" : "slate"}
         label="Pending"
         value={inr(summary.pending)}
-        accent={hasPending ? "text-amber-600" : undefined}
+        sub={hasPending ? "still to be paid" : "nothing pending"}
         icon={<Hourglass className="h-4 w-4" />}
       />
       {hasOverpaid && (
-        <KpiCard
+        <StatCard
+          tone="rose"
           label="Overpaid"
           value={inr(summary.overpaid)}
           sub="paid above earnings"
-          accent="text-destructive"
-          icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+          icon={<AlertTriangle className="h-4 w-4" />}
         />
       )}
       {hasBalance && (
-        <KpiCard
+        <StatCard
           label="Balance"
           value={signedInr(summary.balance)}
           sub={
@@ -67,17 +81,18 @@ export function PayoutKpis({
                 ? "paid extra — adjusts on next bill"
                 : "settled"
           }
-          accent={
+          tone={
             isPositive(summary.balance)
-              ? "text-emerald-600"
+              ? "emerald"
               : isNegative(summary.balance)
-                ? "text-destructive"
-                : undefined
+                ? "rose"
+                : "slate"
           }
           icon={<Scale className="h-4 w-4" />}
         />
       )}
-      <KpiCard
+      <StatCard
+        tone="violet"
         label="Students"
         value={int(summary.students)}
         sub={`${inr(summary.loan_total)} in loans`}

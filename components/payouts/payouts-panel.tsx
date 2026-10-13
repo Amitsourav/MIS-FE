@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { CalendarRange, Download, Info, ListChecks } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -9,6 +9,7 @@ import { DateRangePicker } from "@/components/shell/date-range-picker";
 import { DataAsOf } from "@/components/shell/data-as-of";
 import { PayoutKpis, PayoutKpisSkeleton, type PayoutViewer } from "./payout-kpis";
 import { PayoutStatusPie } from "@/components/charts/payout-status-pie";
+import { SectionTitle } from "./stat-card";
 import { PayoutTable } from "./payout-table";
 import { PayoutsNone, PayoutsUnsupported } from "./payout-empty";
 import { QueryError } from "@/components/query-error";
@@ -17,7 +18,7 @@ import { useLastGood } from "@/lib/use-last-good";
 import { PayoutMonthlyChart } from "@/components/charts/payout-monthly-chart";
 import { ChartSkeleton } from "@/components/skeletons";
 import { Card, CardContent } from "@/components/ui/card";
-import { isPositive } from "@/lib/format";
+import { int, isPositive } from "@/lib/format";
 import type { PayoutFilters, PayoutMonthlyResponse, PayoutsResponse } from "@/lib/types";
 
 // Shared by the provider Payout page and the admin provider "Payouts" tab.
@@ -72,9 +73,12 @@ export function PayoutsPanel({
   const empty = data.total === 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
+          <span className="hidden h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 sm:flex">
+            <CalendarRange className="h-4 w-4" />
+          </span>
           <DateRangePicker
             from={filters.date_from ?? ""}
             to={filters.date_to ?? ""}
@@ -88,9 +92,9 @@ export function PayoutsPanel({
           <DataAsOf value={data.data_as_of} />
           {exportHref !== undefined && (
             <Button
-              variant="outline"
               size="sm"
               disabled={empty}
+              className="bg-indigo-600 text-white shadow-sm hover:bg-indigo-700"
               onClick={() => {
                 window.location.href = exportHref;
               }}
@@ -109,28 +113,48 @@ export function PayoutsPanel({
         <>
           <PayoutKpis summary={data.summary} viewer={viewer} />
           {/* Bar graph and "Where your money is" side by side on desktop, stacked on mobile. */}
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             <div className="min-w-0 lg:col-span-2">
               <MonthlySection query={monthlyQuery} />
             </div>
             {isPositive(data.summary.earned) && <PayoutStatusPie summary={data.summary} />}
           </div>
-          <PayoutTable items={data.items} loading={false} />
-          <Pagination
-            page={page}
-            pageSize={pageSize}
-            total={data.total}
-            fetching={query.isFetching}
-            onPageChange={onPageChange}
-            onPageSizeChange={onPageSizeChange}
-          />
+          <Card className="overflow-hidden rounded-xl">
+            <div className="border-b px-5 py-4">
+              <SectionTitle
+                tone="sky"
+                icon={<ListChecks className="h-4 w-4" />}
+                title="Payout details"
+                description="One row per student and lender, latest release first."
+                right={
+                  <span className="self-start rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
+                    {int(data.total)} {data.total === 1 ? "row" : "rows"}
+                  </span>
+                }
+              />
+            </div>
+            <PayoutTable items={data.items} loading={false} bare />
+            <div className="border-t px-4 py-3">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={data.total}
+                fetching={query.isFetching}
+                onPageChange={onPageChange}
+                onPageSizeChange={onPageSizeChange}
+              />
+            </div>
+          </Card>
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        You earn your rate on the amount the bank has released, and it grows with each tranche.
-        &lsquo;Paid&rsquo; is what FundMyCampus has paid you.
-      </p>
+      <div className="flex gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-sky-900">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+        <p>
+          You earn your rate on the amount the bank has released, and it grows with each tranche.
+          &lsquo;Paid&rsquo; is what FundMyCampus has paid you.
+        </p>
+      </div>
     </div>
   );
 }
