@@ -17,8 +17,8 @@ import { SectionTitle } from "@/components/payouts/stat-card";
 import { inr, inrCompact, int, isPositive } from "@/lib/format";
 import type { PayoutMonthlyResponse } from "@/lib/types";
 
-const DISBURSEMENT = "#4f46e5"; // indigo-600 — the primary series
-const REVENUE = "#c7d2fe"; // indigo-200 — a lighter shade of the same
+const DISBURSEMENT = "#2563eb"; // blue-600 — the primary series
+const REVENUE = "#bfdbfe"; // blue-200 — a lighter shade of the same
 
 function monthDate(m: string) {
   return parse(m, "yyyy-MM", new Date());
@@ -42,26 +42,26 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
     <Card className="h-full rounded-xl">
       <CardHeader className="pb-2">
         <SectionTitle
-          tone="indigo"
+          tone="blue"
           icon={<BarChart3 className="h-4 w-4" />}
           title="Revenue vs Disbursement"
           description={
             <>
-              <span className="font-medium text-indigo-400">Revenue</span>: what you&rsquo;ll
+              <span className="font-medium text-blue-400">Revenue</span>: what you&rsquo;ll
               earn on the full sanctioned loan, in the month it was sanctioned.{" "}
-              <span className="font-medium text-indigo-700">Disbursement</span>: what
+              <span className="font-medium text-blue-700">Disbursement</span>: what
               you&rsquo;ve earned so far on money the bank has released, in the month of each
               release.
             </>
           }
         />
         <div className="flex flex-wrap gap-2 pt-3">
-          <span className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700 ring-1 ring-indigo-100">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs text-blue-700 ring-1 ring-blue-100">
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: REVENUE }} />
             Revenue
             <span className="text-sm font-semibold tabular-nums">{inr(data.revenue_total)}</span>
           </span>
-          <span className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs text-indigo-50 shadow-sm">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-blue-50 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-white/80" />
             Disbursement
             <span className="text-sm font-semibold tabular-nums text-white">
@@ -76,11 +76,11 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
             <BarChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={4}>
               <defs>
                 <linearGradient id="pm-disb" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="0%" stopColor="#3b82f6" />
                   <stop offset="100%" stopColor={DISBURSEMENT} />
                 </linearGradient>
                 <linearGradient id="pm-rev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e0e7ff" />
+                  <stop offset="0%" stopColor="#dbeafe" />
                   <stop offset="100%" stopColor={REVENUE} />
                 </linearGradient>
               </defs>

@@ -14,12 +14,12 @@ const HEAD = "h-10 whitespace-nowrap text-[11px] font-semibold uppercase trackin
 
 // A stable colour per student for the initials avatar.
 const AVATARS = [
-  "bg-indigo-100 text-indigo-700",
+  "bg-blue-100 text-blue-700",
   "bg-emerald-100 text-emerald-700",
   "bg-sky-100 text-sky-700",
   "bg-amber-100 text-amber-800",
   "bg-rose-100 text-rose-700",
-  "bg-violet-100 text-violet-700",
+  "bg-cyan-100 text-cyan-800",
   "bg-teal-100 text-teal-700",
 ];
 function avatarFor(name: string) {
@@ -89,7 +89,7 @@ export function PayoutTable({
             items.map((row, i) => (
               <TableRow
                 key={`${row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}
-                className="even:bg-slate-50/40 hover:bg-indigo-50/40"
+                className="even:bg-slate-50/40 hover:bg-blue-50/40"
               >
                 <TableCell className="tabular-nums text-muted-foreground">
                   {row.serial_no ?? "—"}
@@ -127,11 +127,11 @@ export function PayoutTable({
                 <TableCell className={MONEY}>{inr(row.disbursed_total)}</TableCell>
                 <TableCell>
                   {row.payout_basis === "agreed" ? (
-                    <Badge className="border-transparent bg-violet-100 font-medium text-violet-700 hover:bg-violet-100">
+                    <Badge className="border-transparent bg-slate-100 font-medium text-slate-700 hover:bg-slate-100">
                       Agreed
                     </Badge>
                   ) : (
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-indigo-700 ring-1 ring-indigo-100">
+                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-blue-700 ring-1 ring-blue-100">
                       {ratePct(row.payout_rate) ?? "—"}
                     </span>
                   )}

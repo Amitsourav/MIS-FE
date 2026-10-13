@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 // Colour themes for the Payout page's cards. Each is a full class string so
 // Tailwind keeps them at build time.
 export const TONES = {
-  indigo: {
-    chip: "bg-indigo-50 text-indigo-600 ring-indigo-100",
-    bar: "from-indigo-500 to-violet-500",
-    glow: "bg-indigo-400/10",
+  blue: {
+    chip: "bg-blue-50 text-blue-600 ring-blue-100",
+    bar: "from-blue-600 to-sky-500",
+    glow: "bg-blue-400/10",
     value: "text-slate-900",
   },
   emerald: {
@@ -33,10 +33,10 @@ export const TONES = {
     glow: "bg-rose-400/10",
     value: "text-rose-600",
   },
-  violet: {
-    chip: "bg-violet-50 text-violet-600 ring-violet-100",
-    bar: "from-violet-500 to-fuchsia-500",
-    glow: "bg-violet-400/10",
+  teal: {
+    chip: "bg-teal-50 text-teal-600 ring-teal-100",
+    bar: "from-teal-500 to-cyan-400",
+    glow: "bg-teal-400/10",
     value: "text-slate-900",
   },
   slate: {

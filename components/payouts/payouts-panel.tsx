@@ -76,7 +76,7 @@ export function PayoutsPanel({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="hidden h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 sm:flex">
+          <span className="hidden h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 sm:flex">
             <CalendarRange className="h-4 w-4" />
           </span>
           <DateRangePicker
@@ -94,7 +94,7 @@ export function PayoutsPanel({
             <Button
               size="sm"
               disabled={empty}
-              className="bg-indigo-600 text-white shadow-sm hover:bg-indigo-700"
+              className="bg-slate-900 text-white shadow-sm hover:bg-slate-800"
               onClick={() => {
                 window.location.href = exportHref;
               }}

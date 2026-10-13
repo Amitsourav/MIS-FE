@@ -39,7 +39,7 @@ export function PayoutKpis({
       )}
     >
       <StatCard
-        tone="indigo"
+        tone="blue"
         label="Earned"
         value={inr(summary.earned)}
         sub="on money the bank has released"
@@ -92,7 +92,7 @@ export function PayoutKpis({
         />
       )}
       <StatCard
-        tone="violet"
+        tone="teal"
         label="Students"
         value={int(summary.students)}
         sub={`${inr(summary.loan_total)} in loans`}
