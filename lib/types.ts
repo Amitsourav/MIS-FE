@@ -31,6 +31,7 @@ export interface LoginResponse {
   role: "provider" | "admin";
   provider_id?: string | null;
   brand?: Brand | null; // company scope; null = super-admin
+  is_demo?: boolean; // provider logins: true for a sales-demo partner
 }
 export interface Me {
   user_id: string;
@@ -39,6 +40,7 @@ export interface Me {
   provider_id?: string | null;
   provider_name?: string | null;
   brand?: Brand | null; // company scope; null = super-admin
+  is_demo?: boolean; // provider logins: true for a sales-demo partner
 }
 
 // --- metrics ---
@@ -149,6 +151,7 @@ export interface ProviderOut {
   brand: Brand; // the company this provider belongs to
   contact_email: string | null;
   is_active: boolean;
+  is_demo: boolean; // sales-demo partner: sees "AI Calling", left out of the leaderboard
   created_at: string;
   updated_at: string;
 }
@@ -157,6 +160,7 @@ export interface ProviderCreate {
   brand?: Brand | null; // required for super-admin; omit for company admin
   contact_email?: string | null;
   is_active?: boolean;
+  is_demo?: boolean;
 }
 
 // --- admin management (super-admin only) ---

@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BrandChip } from "@/components/stage-badge";
+import { BrandChip, DemoBadge } from "@/components/stage-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PayoutsPanel } from "@/components/payouts/payouts-panel";
 import { EmptyState } from "@/components/empty-state";
@@ -74,6 +74,7 @@ export default function ProviderDetailPage() {
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             {isLoading ? <Skeleton className="h-7 w-48" /> : provider?.name ?? "Provider not found"}
             {provider && <BrandChip brand={provider.brand} />}
+            {provider?.is_demo && <DemoBadge className="text-xs" />}
           </h1>
           <p className="text-sm text-muted-foreground">
             Edit details, manage logins, map CRM sources, and review payouts.
@@ -168,6 +169,20 @@ function EditProviderCard({ id }: { id: string }) {
                 { is_active: checked },
                 { onError: (e) => toast.error(errorMessage(e)) },
               )
+            }
+          />
+        </div>
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <p className="text-sm font-medium">Demo</p>
+            <p className="text-xs text-muted-foreground">
+              Sales demos only: shows &quot;AI Calling&quot; and is left out of the leaderboard.
+            </p>
+          </div>
+          <Switch
+            checked={provider.is_demo}
+            onCheckedChange={(checked) =>
+              update.mutate({ is_demo: checked }, { onError: (e) => toast.error(errorMessage(e)) })
             }
           />
         </div>

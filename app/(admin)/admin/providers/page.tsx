@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BrandChip } from "@/components/stage-badge";
+import { BrandChip, DemoBadge } from "@/components/stage-badge";
 import { BRAND_LABELS } from "@/lib/tokens";
 import {
   Table,
@@ -181,6 +181,7 @@ export default function ProvidersPage() {
   const mapSources = useMapSources();
   const [open, setOpen] = useState(false);
   const [formBrand, setFormBrand] = useState<Brand | "">("");
+  const [formDemo, setFormDemo] = useState(false);
   // crm_source_id -> source name, for the sources ticked in the dialog.
   const [selected, setSelected] = useState<Record<string, string | null>>({});
   const {
@@ -210,6 +211,7 @@ export default function ProvidersPage() {
   function resetForm() {
     reset();
     setFormBrand("");
+    setFormDemo(false);
     setSelected({});
   }
 
@@ -222,6 +224,7 @@ export default function ProvidersPage() {
       {
         name: values.name,
         contact_email: values.contact_email || undefined,
+        is_demo: formDemo,
         // Only super-admins send brand; company admins omit it (backend forces theirs).
         ...(isSuperAdmin ? { brand: formBrand as Brand } : {}),
       },
@@ -316,6 +319,15 @@ export default function ProvidersPage() {
                     <p className="text-xs text-destructive">{errors.contact_email.message}</p>
                   )}
                 </div>
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <Label htmlFor="is_demo">Demo partner (sales demos only)</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Shows &quot;AI Calling&quot; and is left out of the leaderboard.
+                    </p>
+                  </div>
+                  <Switch id="is_demo" checked={formDemo} onCheckedChange={setFormDemo} />
+                </div>
                 {sourceBrand && (
                   <SourcePicker brand={sourceBrand} selected={selected} onToggle={toggleSource} />
                 )}
@@ -371,6 +383,7 @@ export default function ProvidersPage() {
                     <Link href={`/admin/providers/${p.id}`} className="hover:underline">
                       {p.name}
                     </Link>
+                    {p.is_demo && <DemoBadge className="ml-2" />}
                     {!p.is_active && (
                       <Badge variant="secondary" className="ml-2 text-[10px]">
                         Inactive

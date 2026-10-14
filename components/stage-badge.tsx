@@ -18,3 +18,17 @@ export function BrandChip({ brand, className }: { brand: Brand; className?: stri
     </span>
   );
 }
+
+// Sales-demo partner (fake students; sees "AI Calling").
+export function DemoBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+        className,
+      )}
+    >
+      Demo
+    </span>
+  );
+}

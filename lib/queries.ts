@@ -273,7 +273,12 @@ export function useCreateProvider() {
 export function useUpdateProvider(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { name?: string; contact_email?: string; is_active?: boolean }) =>
+    mutationFn: (body: {
+      name?: string;
+      contact_email?: string;
+      is_active?: boolean;
+      is_demo?: boolean;
+    }) =>
       api.put<ProviderOut>(`/admin/providers/${id}`, body).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["providers"] });

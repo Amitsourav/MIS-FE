@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUrlFilters } from "@/lib/use-filters";
 import { useOverview, useMe } from "@/lib/queries";
@@ -16,6 +16,11 @@ const NAV = [
   { href: "/leads", label: "Leads" },
   { href: "/payout", label: "Payout" },
 ];
+
+const NAV_ITEM = "relative rounded-md px-3 py-1.5 text-sm font-medium transition-colors";
+
+// Demo partner only: the CRM's AI calling (dialpad) screen. Unset = item hidden.
+const AI_CALLING_URL = process.env.NEXT_PUBLIC_CRM_AI_CALLING_URL;
 
 export function Topbar() {
   const pathname = usePathname();
@@ -35,7 +40,7 @@ export function Topbar() {
           <span className="hidden sm:inline">MIS Portal</span>
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap items-center gap-1">
           {NAV.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
@@ -43,7 +48,7 @@ export function Topbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  NAV_ITEM,
                   active
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -53,6 +58,21 @@ export function Topbar() {
               </Link>
             );
           })}
+          {/* Sales demos only — real partners never see this. */}
+          {me?.role === "provider" && me?.is_demo === true && AI_CALLING_URL && (
+            <a
+              href={AI_CALLING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                NAV_ITEM,
+                "inline-flex items-center text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Phone className="mr-1.5 h-4 w-4" />
+              AI Calling
+            </a>
+          )}
         </nav>
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3">
