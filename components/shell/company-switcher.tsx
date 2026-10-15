@@ -17,11 +17,11 @@ export function CompanySwitcher() {
   const { company, setCompany } = useAdminCompany();
   return (
     <div className="space-y-1.5">
-      <p className="flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="flex items-center gap-1.5 px-1 text-xs text-white/60">
         <Building2 className="h-3 w-3" />
         Company
       </p>
-      <div className="inline-flex w-full rounded-md border bg-muted/50 p-0.5">
+      <div className="inline-flex w-full rounded-md bg-white/10 p-0.5">
         {OPTIONS.map((opt) => (
           <button
             key={opt.value}
@@ -30,8 +30,8 @@ export function CompanySwitcher() {
             className={cn(
               "flex-1 rounded px-2 py-1 text-xs font-medium transition-colors",
               company === opt.value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-white text-primary shadow-sm"
+                : "text-white/70 hover:text-white",
             )}
           >
             {opt.label}

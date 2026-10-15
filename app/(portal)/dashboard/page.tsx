@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck, Trophy } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
 import { useOverview, useTrends, useBrandSplit, useQuality, useLeadFunnel } from "@/lib/queries";
-import { KpiCard, KpiCardSkeleton } from "@/components/kpi-card";
+import { KpiCardSkeleton } from "@/components/kpi-card";
+import { StatCard } from "@/components/payouts/stat-card";
 import { GradeBadge } from "@/components/grade-badge";
 import { FunnelChart } from "@/components/charts/funnel-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
@@ -53,7 +54,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-primary">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Performance of the leads you supplied across both CRMs.
         </p>
@@ -79,37 +80,43 @@ export default function DashboardPage() {
               Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} />)
             ) : (
               <>
-                <KpiCard
+                <StatCard
+                  tone="navy"
                   label="Delivered"
                   value={int(o.funnel.delivered)}
                   sub={`${int(o.quality.valid)} valid`}
                   icon={<Inbox className="h-4 w-4" />}
                 />
-                <KpiCard
+                <StatCard
+                  tone="teal"
                   label="Valid %"
                   value={pct(ratio(o.quality.valid, o.quality.delivered), 0)}
                   sub={`${int(o.quality.invalid)} invalid · ${int(o.quality.duplicates)} dup`}
                   icon={<ShieldCheck className="h-4 w-4" />}
                 />
-                <KpiCard
+                <StatCard
+                  tone="sky"
                   label="Qualified"
                   value={int(o.funnel.qualified)}
                   sub={`${pct(o.rates.qualification_rate)} rate`}
                   icon={<Users className="h-4 w-4" />}
                 />
-                <KpiCard
+                <StatCard
+                  tone="emerald"
                   label="Converted"
                   value={int(o.funnel.converted)}
                   sub={`${int(o.funnel.lost)} lost`}
                   icon={<CheckCircle2 className="h-4 w-4" />}
                 />
-                <KpiCard
-                  label="Conversion Rate"
+                <StatCard
+                  tone="blue"
+                  label="Conversion rate"
                   value={pct(o.rates.conversion_rate)}
                   sub={`contact ${pct(o.rates.contact_rate)}`}
                   icon={<TrendingUp className="h-4 w-4" />}
                 />
-                <KpiCard
+                <StatCard
+                  tone="amber"
                   label="Scorecard"
                   value={o.scorecard ? pct(o.scorecard.score_pct / 100, 0) : "—"}
                   sub="overall grade"
@@ -120,7 +127,7 @@ export default function DashboardPage() {
                       <GradeBadge grade={o.scorecard.grade} />
                     </div>
                   )}
-                </KpiCard>
+                </StatCard>
               </>
             )}
           </div>

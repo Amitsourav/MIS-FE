@@ -20,7 +20,7 @@ export default function UnassignedPayoutsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Unassigned payouts</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-primary">Unassigned payouts</h1>
         <p className="text-sm text-muted-foreground">
           FundMyCampus payouts on CRM sources that aren&rsquo;t mapped to any provider, so no
           partner can see them. Map the source on the right{" "}

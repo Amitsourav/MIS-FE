@@ -131,7 +131,7 @@ export default function AdminsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Admins</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Admins</h1>
           <p className="text-sm text-muted-foreground">
             Manage admin accounts. A super-admin sees both companies; a company admin is locked to one.
           </p>
@@ -208,7 +208,7 @@ export default function AdminsPage() {
         </div>
       )}
 
-      <Card>
+      <Card className="overflow-hidden rounded-xl shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

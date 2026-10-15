@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
+import { avatarFor, initials } from "@/lib/avatar";
 import { date, inr, isNegative, isPositive, ratePct, signedInr } from "@/lib/format";
 import type { PayoutItem } from "@/lib/types";
 
@@ -11,27 +12,8 @@ import type { PayoutItem } from "@/lib/types";
 type Row = PayoutItem & { serial_no?: number | null; source_name?: string | null };
 
 const MONEY = "text-right tabular-nums whitespace-nowrap";
-const HEAD = "h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-slate-500";
+const HEAD = "whitespace-nowrap";
 
-// A stable colour per student for the initials avatar.
-const AVATARS = [
-  "bg-blue-100 text-blue-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-800",
-  "bg-rose-100 text-rose-700",
-  "bg-cyan-100 text-cyan-800",
-  "bg-teal-100 text-teal-700",
-];
-function avatarFor(name: string) {
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return AVATARS[h % AVATARS.length];
-}
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
-}
 const SUB = "block text-xs font-normal text-muted-foreground";
 
 // One row per student × lender, in server order (last released, newest first).
@@ -54,7 +36,7 @@ export function PayoutTable({
   return (
     <div className={cn("bg-card", !bare && "overflow-hidden rounded-xl border shadow-sm")}>
       <Table>
-        <TableHeader className="bg-slate-50/80">
+        <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className={cn(HEAD, "w-16")}>#</TableHead>
             {showSource && <TableHead className={HEAD}>Source</TableHead>}

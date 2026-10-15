@@ -1,48 +1,46 @@
 import { cn } from "@/lib/utils";
 
-// Colour themes for the Payout page's cards. Each is a full class string so
+// Colour themes for the stat cards (Dashboard, Payout). Each is a full class string so
 // Tailwind keeps them at build time.
 export const TONES = {
+  navy: {
+    chip: "bg-primary/10 text-primary ring-primary/15",
+    bar: "bg-primary",
+    value: "text-primary",
+  },
   blue: {
     chip: "bg-blue-50 text-blue-600 ring-blue-100",
-    bar: "from-blue-600 to-sky-500",
-    glow: "bg-blue-400/10",
+    bar: "bg-blue-600",
     value: "text-slate-900",
   },
   emerald: {
     chip: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-    bar: "from-emerald-500 to-teal-400",
-    glow: "bg-emerald-400/10",
+    bar: "bg-emerald-500",
     value: "text-emerald-700",
   },
   sky: {
     chip: "bg-sky-50 text-sky-600 ring-sky-100",
-    bar: "from-sky-500 to-cyan-400",
-    glow: "bg-sky-400/10",
+    bar: "bg-sky-500",
     value: "text-slate-900",
   },
   amber: {
     chip: "bg-amber-50 text-amber-600 ring-amber-100",
-    bar: "from-amber-500 to-orange-400",
-    glow: "bg-amber-400/10",
+    bar: "bg-amber-500",
     value: "text-amber-700",
   },
   rose: {
     chip: "bg-rose-50 text-rose-600 ring-rose-100",
-    bar: "from-rose-500 to-pink-500",
-    glow: "bg-rose-400/10",
+    bar: "bg-rose-500",
     value: "text-rose-600",
   },
   teal: {
     chip: "bg-teal-50 text-teal-600 ring-teal-100",
-    bar: "from-teal-500 to-cyan-400",
-    glow: "bg-teal-400/10",
+    bar: "bg-teal-500",
     value: "text-slate-900",
   },
   slate: {
     chip: "bg-slate-100 text-slate-600 ring-slate-200",
-    bar: "from-slate-400 to-slate-300",
-    glow: "bg-slate-400/10",
+    bar: "bg-slate-300",
     value: "text-slate-900",
   },
 } as const;
@@ -55,22 +53,21 @@ export function StatCard({
   sub,
   icon,
   tone,
+  children,
 }: {
   label: string;
   value: React.ReactNode;
   sub?: React.ReactNode;
   icon: React.ReactNode;
   tone: Tone;
+  children?: React.ReactNode;
 }) {
   const t = TONES[tone];
   return (
-    <div className="group relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
-      <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", t.bar)} />
-      <div className={cn("pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full", t.glow)} />
+    <div className="relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm">
+      <div className={cn("absolute inset-x-0 top-0 h-1", t.bar)} />
       <div className="relative flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
+        <p className="text-sm font-medium text-slate-600">{label}</p>
         <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1", t.chip)}>
           {icon}
         </span>
@@ -79,6 +76,7 @@ export function StatCard({
         {value}
       </div>
       {sub && <p className="relative mt-1 text-xs text-muted-foreground">{sub}</p>}
+      {children}
     </div>
   );
 }

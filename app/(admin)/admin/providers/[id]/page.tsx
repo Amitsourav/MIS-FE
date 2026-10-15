@@ -71,7 +71,7 @@ export default function ProviderDetailPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-primary">
             {isLoading ? <Skeleton className="h-7 w-48" /> : provider?.name ?? "Provider not found"}
             {provider && <BrandChip brand={provider.brand} />}
             {provider?.is_demo && <DemoBadge className="text-xs" />}

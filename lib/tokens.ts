@@ -17,7 +17,7 @@ export const STAGE_COLORS: Record<CanonicalStage, string> = {
   contacted: "#60a5fa", // blue-400
   connected: "#38bdf8", // sky-400
   qualified: "#22d3ee", // cyan-400
-  in_process: "#818cf8", // indigo-400
+  in_process: "#14b8a6", // teal-500
   converted: "#10b981", // emerald-500
   opportunity: "#f59e0b", // amber-500
   dnp: "#9ca3af", // gray-400 (muted)

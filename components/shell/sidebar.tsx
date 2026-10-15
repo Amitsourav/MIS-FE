@@ -62,29 +62,31 @@ export function Sidebar() {
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r bg-background transition-transform md:static md:z-auto md:translate-x-0 md:bg-muted/20",
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-primary text-primary-foreground transition-transform md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-14 items-center gap-2 border-b px-5 font-semibold">
-          {brandMark}
+        <div className="flex h-14 items-center gap-2 border-b border-white/10 px-5 font-semibold">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-primary">
+            <BarChart3 className="h-4 w-4" />
+          </span>
           MIS Admin
           <button
             type="button"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
-            className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-accent md:hidden"
+            className="ml-auto rounded-md p-1 text-white/70 hover:bg-white/10 md:hidden"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
         {isSuperAdmin ? (
-          <div className="border-b p-3">
+          <div className="border-b border-white/10 p-3">
             <CompanySwitcher />
           </div>
         ) : (
           me?.brand && (
-            <div className="border-b px-4 py-2.5 text-xs text-muted-foreground">
+            <div className="border-b border-white/10 px-5 py-2.5 text-xs text-white/70">
               {BRAND_LABELS[me.brand]}
             </div>
           )
@@ -98,10 +100,10 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    ? "bg-white/10 text-white before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:rounded-full before:bg-teal-400"
+                    : "text-white/65 hover:bg-white/5 hover:text-white",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -110,9 +112,9 @@ export function Sidebar() {
             );
           })}
         </nav>
-        <div className="border-t p-3">
-          <p className="mb-2 truncate px-3 text-xs text-muted-foreground">{me?.email ?? ""}</p>
-          <LogoutButton />
+        <div className="border-t border-white/10 p-3">
+          <p className="mb-2 truncate px-3 text-xs text-white/60">{me?.email ?? ""}</p>
+          <LogoutButton className="text-white/70 hover:bg-white/10 hover:text-white" />
         </div>
       </aside>
     </>

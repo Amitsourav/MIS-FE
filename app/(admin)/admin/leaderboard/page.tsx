@@ -21,6 +21,7 @@ import { useLastGood } from "@/lib/use-last-good";
 import { defaultRange } from "@/lib/filters";
 import { int, pct } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { GRADE_COLORS } from "@/lib/tokens";
 import type { LeaderboardRow } from "@/lib/types";
 
 type SortKey = keyof Pick<
@@ -29,14 +30,32 @@ type SortKey = keyof Pick<
 >;
 
 const COLUMNS: { key: SortKey; label: string; numeric?: boolean; render: (r: LeaderboardRow) => React.ReactNode }[] = [
-  { key: "provider_name", label: "Provider", render: (r) => <span className="font-medium">{r.provider_name}</span> },
+  { key: "provider_name", label: "Provider", render: (r) => <span className="font-medium text-slate-900">{r.provider_name}</span> },
   { key: "delivered", label: "Delivered", numeric: true, render: (r) => int(r.delivered) },
   { key: "valid", label: "Valid", numeric: true, render: (r) => int(r.valid) },
   { key: "qualified", label: "Qualified", numeric: true, render: (r) => int(r.qualified) },
-  { key: "converted", label: "Converted", numeric: true, render: (r) => int(r.converted) },
+  { key: "converted", label: "Converted", numeric: true, render: (r) => <span className="font-medium text-emerald-700">{int(r.converted)}</span> },
   { key: "qualification_rate", label: "Qual. rate", numeric: true, render: (r) => pct(r.qualification_rate) },
   { key: "conversion_rate", label: "Conv. rate", numeric: true, render: (r) => pct(r.conversion_rate) },
-  { key: "score_pct", label: "Score", numeric: true, render: (r) => pct(r.score_pct / 100, 0) },
+  {
+    key: "score_pct",
+    label: "Score",
+    numeric: true,
+    render: (r) => (
+      <span className="inline-flex items-center justify-end gap-2">
+        <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-slate-100 sm:block">
+          <span
+            className="block h-full rounded-full"
+            style={{
+              width: `${Math.min(Math.max(r.score_pct, 0), 100)}%`,
+              backgroundColor: GRADE_COLORS[r.grade],
+            }}
+          />
+        </span>
+        <span className="w-9 font-semibold">{pct(r.score_pct / 100, 0)}</span>
+      </span>
+    ),
+  },
 ];
 
 export default function LeaderboardPage() {
@@ -67,13 +86,13 @@ export default function LeaderboardPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Leaderboard</h1>
           <p className="text-sm text-muted-foreground">Provider performance ranked by score.</p>
         </div>
         <DateRangePicker from={range.from} to={range.to} onChange={setRange} />
       </div>
 
-      <Card>
+      <Card className="overflow-hidden rounded-xl shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

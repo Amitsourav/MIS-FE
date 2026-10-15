@@ -8,6 +8,8 @@ import { leadsQuery } from "@/lib/filters";
 import { LeadsTable } from "@/components/leads-table";
 import { QueryError } from "@/components/query-error";
 import { useLastGood } from "@/lib/use-last-good";
+import { useStageTones } from "@/lib/stage-colors";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +28,10 @@ export default function LeadsPage() {
   const { filters, setFilters } = useUrlFilters();
   const leads = useLeads(filters);
   const { data, error } = useLastGood(leads);
+  const { tone, learn } = useStageTones(filters);
+  useEffect(() => {
+    if (data) learn(data.items);
+  }, [data, learn]);
   // CRM stages (in CRM order) for the current date/brand scope.
   const stages = useStages(filters);
   const stageOptions = stages.data ?? [];
@@ -60,9 +66,9 @@ export default function LeadsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Leads</h1>
           <p className="text-sm text-muted-foreground">
-            Brand & date are set in the top bar. Filter by stage or search below.
+            Every lead you&apos;ve sent us, with where it stands today.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={total === 0}>
@@ -96,7 +102,10 @@ export default function LeadsPage() {
             <SelectItem value={ALL_STAGES}>All stages</SelectItem>
             {stageOptions.map((s) => (
               <SelectItem key={s.value} value={s.value}>
-                {s.label} ({int(s.count)})
+                <span className="flex items-center gap-2">
+                  <span className={cn("h-2 w-2 shrink-0 rounded-full", tone(s.value).dot)} />
+                  {s.label} ({int(s.count)})
+                </span>
               </SelectItem>
             ))}
             {selectedMissing && (
@@ -122,7 +131,8 @@ export default function LeadsPage() {
         <LeadsTable
           leads={data?.items ?? []}
           loading={!data}
-          emptyHint="Adjust the brand, date, stage, or search filters."
+          emptyHint="Try a wider date range, another stage, or clear the search."
+          stageTone={(l) => tone(l.crm_stage, l.canonical_stage)}
         />
       )}
 

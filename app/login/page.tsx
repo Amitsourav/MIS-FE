@@ -61,8 +61,8 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 px-4">
+      <Card className="w-full max-w-sm rounded-xl shadow-xl">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BarChart3 className="h-6 w-6" />

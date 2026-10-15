@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/empty-state";
 import { cn } from "@/lib/utils";
+import { avatarFor, initials } from "@/lib/avatar";
+import type { StageTone } from "@/lib/stage-colors";
 import { date, inr } from "@/lib/format";
 import type { LeadLender, LeadLenderStatus, LeadOut } from "@/lib/types";
 
@@ -75,13 +77,15 @@ export function LeadsTable({
   leads,
   loading,
   emptyHint,
+  stageTone,
 }: {
   leads: LeadOut[];
   loading: boolean;
   emptyHint?: React.ReactNode;
+  stageTone: (lead: LeadOut) => StageTone;
 }) {
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -110,14 +114,43 @@ export function LeadsTable({
             </TableRow>
           ) : (
             leads.map((l) => (
-              <TableRow key={l.id} className="align-top">
-                <TableCell className="tabular-nums text-muted-foreground">
+              <TableRow key={l.id} className="even:bg-slate-50/40">
+                <TableCell className="font-semibold tabular-nums text-primary">
                   {l.lead_no != null ? `#${l.lead_no}` : "—"}
                 </TableCell>
-                <TableCell className="font-medium">{l.full_name ?? "—"}</TableCell>
+                <TableCell>
+                  {l.full_name ? (
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={cn(
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                          avatarFor(l.full_name),
+                        )}
+                      >
+                        {initials(l.full_name)}
+                      </span>
+                      <span className="font-medium text-slate-900">{l.full_name}</span>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
                 <TableCell className="whitespace-nowrap tabular-nums">{l.phone ?? "—"}</TableCell>
                 {/* The CRM's own stage name; canonical_stage is only for charts. */}
-                <TableCell className="whitespace-nowrap">{l.crm_stage_label ?? "—"}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {l.crm_stage_label ? (
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
+                        stageTone(l).pill,
+                      )}
+                    >
+                      {l.crm_stage_label}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
                 <TableCell className="whitespace-nowrap">{l.counsellor_name ?? "—"}</TableCell>
                 <TableCell className="min-w-[200px]">
                   <LenderCell lenders={l.lenders ?? []} />

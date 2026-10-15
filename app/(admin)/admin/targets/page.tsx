@@ -20,6 +20,14 @@ const GROUP_HELP: Record<string, string> = {
   other: "Other configurable company targets.",
 };
 
+// One colour per group so the three kinds of setting are easy to tell apart.
+const GROUP_DOT: Record<string, string> = {
+  weight: "bg-blue-500",
+  band: "bg-teal-500",
+  grade: "bg-amber-500",
+  other: "bg-slate-400",
+};
+
 function groupOf(metricKey: string) {
   const prefix = metricKey.split(".")[0];
   return ["weight", "band", "grade"].includes(prefix) ? prefix : "other";
@@ -69,7 +77,7 @@ export default function TargetsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Targets</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Targets</h1>
           <p className="text-sm text-muted-foreground">
             Company scoring settings. These drive grades and color bands across the portal.
           </p>
@@ -98,9 +106,12 @@ export default function TargetsPage() {
         </Card>
       ) : (
         Object.entries(grouped).map(([group, items]) => (
-          <Card key={group}>
+          <Card key={group} className="rounded-xl shadow-sm">
             <CardHeader>
-              <CardTitle className="capitalize">{group}</CardTitle>
+              <CardTitle className="flex items-center gap-2 capitalize">
+                <span className={`h-2.5 w-2.5 rounded-full ${GROUP_DOT[group] ?? GROUP_DOT.other}`} />
+                {group}
+              </CardTitle>
               <CardDescription>{GROUP_HELP[group]}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">

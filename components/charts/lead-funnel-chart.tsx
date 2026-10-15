@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   LabelList,
   ResponsiveContainer,
   Tooltip,
@@ -14,7 +15,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { int, pct } from "@/lib/format";
 import type { FunnelStep } from "@/lib/types";
 
-const COLOR = "#10b981"; // emerald-500, same as "converted" elsewhere
+// Cool to green as a lead moves toward money: navy, blue, sky, teal, emerald.
+const STEP_COLORS: Record<FunnelStep["key"], string> = {
+  all: "#1e3a5f",
+  logged_in: "#2563eb",
+  sanctioned: "#0ea5e9",
+  pf_paid: "#14b8a6",
+  disbursed: "#10b981",
+};
 
 // Loan pipeline: one horizontal bar per step, in API order. Counts are cumulative
 // (a disbursed student also counts in Login, Sanction and PF paid), so they never rise.
@@ -69,7 +77,10 @@ export function LeadFunnelChart({ steps }: { steps: FunnelStep[] }) {
                 return [r.fromPrev ? `${r.display} (${r.fromPrev})` : r.display, "Leads"];
               }}
             />
-            <Bar dataKey="count" fill={COLOR} radius={[0, 4, 4, 0]} minPointSize={2}>
+            <Bar dataKey="count" radius={[0, 4, 4, 0]} minPointSize={2}>
+              {rows.map((r) => (
+                <Cell key={r.key} fill={STEP_COLORS[r.key] ?? "#2563eb"} />
+              ))}
               <LabelList
                 dataKey="display"
                 position="right"

@@ -63,7 +63,7 @@ export function PayoutStatusPie({ summary }: { summary: PayoutSummary }) {
             </PieChart>
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               Total earned
             </span>
             <span className="text-lg font-bold tabular-nums text-slate-900">

@@ -264,7 +264,7 @@ export default function ProvidersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Providers</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Providers</h1>
           <p className="text-sm text-muted-foreground">Manage lead providers and their access.</p>
         </div>
         <Dialog
@@ -345,7 +345,7 @@ export default function ProvidersPage() {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden rounded-xl shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -380,7 +380,7 @@ export default function ProvidersPage() {
               providers!.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/admin/providers/${p.id}`} className="hover:underline">
+                    <Link href={`/admin/providers/${p.id}`} className="text-primary hover:underline">
                       {p.name}
                     </Link>
                     {p.is_demo && <DemoBadge className="ml-2" />}

@@ -94,7 +94,7 @@ export function PayoutsPanel({
             <Button
               size="sm"
               disabled={empty}
-              className="bg-slate-900 text-white shadow-sm hover:bg-slate-800"
+              className="shadow-sm"
               onClick={() => {
                 window.location.href = exportHref;
               }}
