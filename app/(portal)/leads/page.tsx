@@ -76,7 +76,7 @@ export default function LeadsPage() {
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search name or phone…"
+            placeholder="Name, phone or lead no."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"

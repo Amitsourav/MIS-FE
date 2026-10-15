@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { date, inr, isNegative, isPositive, ratePct, signedInr } from "@/lib/format";
 import type { PayoutItem } from "@/lib/types";
 
-type Row = PayoutItem & { source_name?: string | null };
+// Unassigned payouts (admin) also carry FMC's serial no. and the CRM source name.
+type Row = PayoutItem & { serial_no?: number | null; source_name?: string | null };
 
 const MONEY = "text-right tabular-nums whitespace-nowrap";
 const HEAD = "h-10 whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider text-slate-500";
@@ -88,11 +89,11 @@ export function PayoutTable({
           ) : (
             items.map((row, i) => (
               <TableRow
-                key={`${row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}
+                key={`${row.lead_no ?? row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}
                 className="even:bg-slate-50/40 hover:bg-blue-50/40"
               >
                 <TableCell className="tabular-nums text-muted-foreground">
-                  {row.serial_no ?? "—"}
+                  {row.lead_no ?? row.serial_no ?? "—"}
                 </TableCell>
                 {showSource && (
                   <TableCell className="whitespace-nowrap">{row.source_name ?? "—"}</TableCell>

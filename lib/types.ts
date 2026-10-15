@@ -110,18 +110,31 @@ export interface BrandSplitResponse {
 }
 
 // --- leads ---
+// Partners never see FMC's serial no., the brand or our CRM source name.
+export type LeadLenderStatus = "loan_login" | "sanctioned" | "pf_paid" | "disbursed" | "lost";
+
+export interface LeadLender {
+  bank: string | null; // the real bank ("PNB"); null = still on an aggregator → "—"
+  status: LeadLenderStatus;
+  status_label: string; // "Logged in" | "Sanctioned" | "PF Paid" | "Disbursed" | "Declined"
+  amount: MoneyString | null;
+  amount_kind: "sanctioned" | "applied" | null; // applied = asked for, before a sanction
+  application_no: string | null;
+}
+
 export interface LeadOut {
   id: string;
-  serial_no: number | null;
+  lead_no: number | null; // the partner's own number, 1 = their oldest lead
   full_name: string | null;
   phone: string | null;
-  brand: Brand;
-  source_name: string | null;
   canonical_stage: CanonicalStage; // charts only — the table shows crm_stage_label
+  crm_stage: string | null;
   crm_stage_label: string | null; // the CRM's own stage name
   is_invalid: boolean;
   is_duplicate: boolean;
   created_at: string | null;
+  counsellor_name: string | null;
+  lenders: LeadLender[]; // furthest-along first; [] until the file is logged in somewhere
 }
 
 // --- loan pipeline (GET /me/lead-funnel, FundMyCampus only) ---
@@ -245,9 +258,9 @@ export type InvoiceStatus = "raised" | "paid" | "cancelled";
 export type InvoiceState = "not_raised" | "raised" | "overdue";
 
 export interface PayoutItem {
-  serial_no: number | null;
+  lead_no: number | null; // the partner's own lead number
   full_name: string | null;
-  bank_name: string | null;
+  bank_name: string | null; // the real bank ("PNB"); null = still on an aggregator → "—"
   loan_amount: MoneyString | null; // sanctioned by this lender
   pf_paid_on: string | null; // information only; no longer the earning date
   first_disbursed_on: string | null; // YYYY-MM-DD — the bank's first release
@@ -302,7 +315,10 @@ export interface PayoutFilters {
 }
 
 // Admin only: FMC payouts on CRM sources no provider is mapped to (GET /admin/payouts/unmapped).
+// Admin pages may show FMC's serial no. and the CRM route (e.g. "UC PNB").
 export interface UnmappedPayoutItem extends PayoutItem {
+  serial_no: number | null;
+  crm_bank_name: string | null;
   crm_source_id: string | null;
   source_name: string | null;
 }
