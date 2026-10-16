@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Phone } from "lucide-react";
+import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUrlFilters } from "@/lib/use-filters";
 import { useOverview, useMe } from "@/lib/queries";
@@ -10,6 +10,7 @@ import { DateRangePicker } from "./date-range-picker";
 import { DataAsOf } from "./data-as-of";
 import { LogoutButton } from "./logout-button";
 import { BRAND_LABELS } from "@/lib/tokens";
+import { BrandLogo } from "@/components/brand-logo";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -34,10 +35,11 @@ export function Topbar() {
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <BarChart3 className="h-4 w-4" />
+          {/* The partner's company: FundMyCampus or Admitverse. */}
+          <BrandLogo brand={me?.brand} className="h-6 sm:h-7" />
+          <span className="hidden border-l pl-2 text-sm font-medium text-muted-foreground sm:inline">
+            {me?.brand ? "MIS" : "MIS Portal"}
           </span>
-          <span className="hidden sm:inline">MIS Portal</span>
         </Link>
 
         <nav className="flex flex-wrap items-center gap-1">

@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Trophy, Target, BarChart3, ShieldCheck, Wallet, Menu, X } from "lucide-react";
+import { Users, Trophy, Target, ShieldCheck, Wallet, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMe } from "@/lib/queries";
 import { BRAND_LABELS } from "@/lib/tokens";
+import { useAdminCompany, effectiveCompany } from "@/lib/admin-company";
+import { BrandLogo } from "@/components/brand-logo";
 import { LogoutButton } from "./logout-button";
 import { CompanySwitcher } from "./company-switcher";
 
@@ -37,11 +39,11 @@ export function Sidebar() {
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
 
-  const brandMark = (
-    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-      <BarChart3 className="h-4 w-4" />
-    </span>
-  );
+  // Logo of the company in view: a company admin's own, or the super-admin's pick.
+  // "Both" (or still loading) shows the neutral MIS mark.
+  const { company } = useAdminCompany();
+  const picked = me ? effectiveCompany(me.brand, company) : "both";
+  const logoBrand = picked === "both" ? null : picked;
 
   return (
     <>
@@ -54,8 +56,10 @@ export function Sidebar() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        {brandMark}
-        MIS Admin
+        <BrandLogo brand={logoBrand} className="h-6" />
+        <span className={cn(logoBrand && "border-l pl-2 text-sm font-medium text-muted-foreground")}>
+          {logoBrand ? "Admin" : "MIS Admin"}
+        </span>
       </header>
       {open && (
         <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
@@ -67,10 +71,17 @@ export function Sidebar() {
         )}
       >
         <div className="flex h-14 items-center gap-2 border-b border-white/10 px-5 font-semibold">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-white text-primary">
-            <BarChart3 className="h-4 w-4" />
+          {logoBrand ? (
+            // The FMC logo has dark text, so it sits on a white tile on the navy sidebar.
+            <span className={cn("flex items-center rounded-md", logoBrand === "fmc" && "bg-white px-2 py-1")}>
+              <BrandLogo brand={logoBrand} className={logoBrand === "fmc" ? "h-5" : "h-7"} />
+            </span>
+          ) : (
+            <BrandLogo brand={null} fallbackClassName="bg-white text-primary" />
+          )}
+          <span className={cn(logoBrand && "text-sm font-medium text-white/70")}>
+            {logoBrand ? "Admin" : "MIS Admin"}
           </span>
-          MIS Admin
           <button
             type="button"
             aria-label="Close menu"
