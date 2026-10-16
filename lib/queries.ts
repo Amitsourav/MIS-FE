@@ -16,6 +16,7 @@ import type {
   QualityMetrics,
   Page,
   LeadOut,
+  LeadDetail,
   ProviderOut,
   ProviderSourceOut,
   ProviderUserCreated,
@@ -105,6 +106,15 @@ export function useLeads(f: Filters) {
 }
 
 // Loan pipeline (All leads → Login → Sanction → PF paid → Disbursed), by lead created date.
+// One lead with its stage history and payouts. A 404 (not this partner's lead) is final.
+export function useLeadDetail(id: string) {
+  return useQuery({
+    queryKey: ["lead", id],
+    queryFn: () => get<LeadDetail>(`/me/leads/${encodeURIComponent(id)}`),
+    staleTime: STALE,
+  });
+}
+
 export function useLeadFunnel(f: Filters) {
   const params = metricQuery(f);
   return useQuery({

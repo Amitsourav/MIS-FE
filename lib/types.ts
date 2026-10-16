@@ -137,6 +137,21 @@ export interface LeadOut {
   lenders: LeadLender[]; // furthest-along first; [] until the file is logged in somewhere
 }
 
+// --- one lead (GET /me/leads/{id}); 404 = not this partner's lead ---
+export interface StageEvent {
+  stage: string; // as stored, e.g. "pf_paid"
+  label: string; // the CRM's name, e.g. "PF Paid"
+  at: string; // when the lead moved to it
+}
+
+export interface LeadDetail extends LeadOut {
+  contacted_at: string | null;
+  qualified_at: string | null;
+  converted_at: string | null;
+  stage_history: StageEvent[]; // oldest first; can be []
+  payouts: PayoutItem[]; // one per lender file; [] for Admitverse or no payout yet
+}
+
 // --- loan pipeline (GET /me/lead-funnel, FundMyCampus only) ---
 export interface FunnelStep {
   key: "all" | "logged_in" | "sanctioned" | "pf_paid" | "disbursed";

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
@@ -9,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { avatarFor, initials } from "@/lib/avatar";
 import type { StageTone } from "@/lib/stage-colors";
 import { date, inr } from "@/lib/format";
+import { leadHref, markOpenedFromList } from "@/lib/lead-nav";
 import type { LeadLender, LeadLenderStatus, LeadOut } from "@/lib/types";
 
 const COLS = 8;
@@ -21,7 +24,7 @@ const STATUS_CLASSES: Record<LeadLenderStatus, string> = {
   lost: "bg-red-50 text-red-600",
 };
 
-function LenderLine({ lender, className }: { lender: LeadLender; className?: string }) {
+export function LenderLine({ lender, className }: { lender: LeadLender; className?: string }) {
   const amount = lender.amount
     ? `${inr(lender.amount)}${lender.amount_kind === "applied" ? " (applied)" : ""}`
     : null;
@@ -63,7 +66,10 @@ function LenderCell({ lenders }: { lenders: LeadLender[] }) {
       {more > 0 && (
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
+          onClick={(e) => {
+            e.stopPropagation(); // don't open the lead
+            setExpanded((v) => !v);
+          }}
           className="text-xs font-medium text-primary underline-offset-2 hover:underline sm:hidden"
         >
           {expanded ? "Show less" : `+${more} more`}
@@ -84,6 +90,22 @@ export function LeadsTable({
   emptyHint?: React.ReactNode;
   stageTone: (lead: LeadOut) => StageTone;
 }) {
+  const router = useRouter();
+
+  // The whole row opens the lead. The name is a real <Link>, so ⌘/Ctrl-click and
+  // middle-click on it behave natively; elsewhere on the row we mirror that.
+  function openLead(e: React.MouseEvent, id: string) {
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    if (window.getSelection()?.toString()) return; // selecting text, e.g. a phone no.
+    const href = leadHref(id);
+    if (e.metaKey || e.ctrlKey || e.button === 1) {
+      window.open(href, "_blank", "noopener");
+      return;
+    }
+    markOpenedFromList();
+    router.push(href);
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
@@ -114,26 +136,43 @@ export function LeadsTable({
             </TableRow>
           ) : (
             leads.map((l) => (
-              <TableRow key={l.id} className="even:bg-slate-50/40">
+              <TableRow
+                key={l.id}
+                className="cursor-pointer even:bg-slate-50/40 hover:bg-blue-50/50"
+                onClick={(e) => openLead(e, l.id)}
+                onAuxClick={(e) => e.button === 1 && openLead(e, l.id)}
+              >
                 <TableCell className="font-semibold tabular-nums text-primary">
                   {l.lead_no != null ? `#${l.lead_no}` : "—"}
                 </TableCell>
                 <TableCell>
-                  {l.full_name ? (
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                          avatarFor(l.full_name),
-                        )}
-                      >
-                        {initials(l.full_name)}
+                  <Link
+                    href={leadHref(l.id)}
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && !e.shiftKey) markOpenedFromList();
+                    }}
+                    className="group flex items-center gap-2.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {l.full_name ? (
+                      <>
+                        <span
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                            avatarFor(l.full_name),
+                          )}
+                        >
+                          {initials(l.full_name)}
+                        </span>
+                        <span className="font-medium text-slate-900 group-hover:text-primary group-hover:underline">
+                          {l.full_name}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-primary underline-offset-2 group-hover:underline">
+                        View lead
                       </span>
-                      <span className="font-medium text-slate-900">{l.full_name}</span>
-                    </div>
-                  ) : (
-                    "—"
-                  )}
+                    )}
+                  </Link>
                 </TableCell>
                 <TableCell className="whitespace-nowrap tabular-nums">{l.phone ?? "—"}</TableCell>
                 {/* The CRM's own stage name; canonical_stage is only for charts. */}

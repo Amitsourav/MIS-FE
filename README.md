@@ -59,7 +59,8 @@ in production (`NODE_ENV=production`).
 
 ## Project layout
 
-- `app/(portal)/` — provider area: `dashboard`, `leads`, `payout` (FMC partner earnings).
+- `app/(portal)/` — provider area: `dashboard`, `leads`, `leads/[id]` (one lead: lenders,
+  stage journey, payouts; 404 → "Lead not found"), `payout` (FMC partner earnings).
 - `app/(admin)/admin/` — `providers`, `providers/[id]` (Details + Payouts tabs), `leaderboard`,
   `targets`, `admins` (super-admin only). `/admin/sync` just redirects (nothing to sync).
 - `app/api/` — BFF: `auth/login`, `auth/logout`, `[...path]` catch-all proxy (server-only).
