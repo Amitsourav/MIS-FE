@@ -17,6 +17,10 @@ import type {
   Page,
   LeadOut,
   LeadDetail,
+  ChatThread,
+  ChatMessage,
+  ChatPost,
+  ChatLatest,
   ProviderOut,
   ProviderSourceOut,
   ProviderUserCreated,
@@ -112,6 +116,55 @@ export function useLeadDetail(id: string) {
     queryKey: ["lead", id],
     queryFn: () => get<LeadDetail>(`/me/leads/${encodeURIComponent(id)}`),
     staleTime: STALE,
+  });
+}
+
+// ---------------- partner chat on a lead ----------------
+// Unread "new reply" flags for the Leads table. Before the CRM chat API is live this
+// 503s; the table then just shows no dots, so don't retry or surface it.
+export function useMessagesLatest() {
+  return useQuery({
+    queryKey: ["messages-latest"],
+    queryFn: () => get<ChatLatest[]>("/me/messages/latest"),
+    staleTime: STALE,
+    retry: false,
+  });
+}
+
+// Opening the thread marks staff replies as read, so refresh the unread flags after.
+// Polls every 20 s while the tab is visible, and on window focus.
+export function useLeadMessages(id: string) {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ["lead-messages", id],
+    queryFn: async () => {
+      const thread = await get<ChatThread>(`/me/leads/${encodeURIComponent(id)}/messages`);
+      // Only when this lead had a dot, so the 20 s poll doesn't refetch the list each time.
+      const latest = qc.getQueryData<ChatLatest[]>(["messages-latest"]);
+      if (latest?.some((m) => m.lead_id === id && m.unread)) {
+        void qc.invalidateQueries({ queryKey: ["messages-latest"] });
+      }
+      return thread;
+    },
+    staleTime: 0,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+// Appends the returned message to the cached thread; no full refetch.
+export function useSendLeadMessage(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ChatPost) =>
+      api
+        .post<ChatMessage>(`/me/leads/${encodeURIComponent(id)}/messages`, body)
+        .then((r) => r.data),
+    onSuccess: (msg) => {
+      qc.setQueryData<ChatThread>(["lead-messages", id], (t) =>
+        t && !t.items.some((m) => m.id === msg.id) ? { ...t, items: [...t.items, msg] } : t,
+      );
+    },
   });
 }
 

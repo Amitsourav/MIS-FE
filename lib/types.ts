@@ -113,6 +113,12 @@ export interface BrandSplitResponse {
 // Partners never see FMC's serial no., the brand or our CRM source name.
 export type LeadLenderStatus = "loan_login" | "sanctioned" | "pf_paid" | "disbursed" | "lost";
 
+export interface LeadTranche {
+  tranche_no: number | null;
+  amount: MoneyString | null;
+  disbursed_on: string | null; // YYYY-MM-DD
+}
+
 export interface LeadLender {
   bank: string | null; // the real bank ("PNB"); null = still on an aggregator → "—"
   status: LeadLenderStatus;
@@ -120,6 +126,7 @@ export interface LeadLender {
   amount: MoneyString | null;
   amount_kind: "sanctioned" | "applied" | null; // applied = asked for, before a sanction
   application_no: string | null;
+  tranches: LeadTranche[]; // every release so far, tranche 1 first; [] until money is released
 }
 
 export interface LeadOut {
@@ -150,6 +157,35 @@ export interface LeadDetail extends LeadOut {
   converted_at: string | null;
   stage_history: StageEvent[]; // oldest first; can be []
   payouts: PayoutItem[]; // one per lender file; [] for Admitverse or no payout yet
+}
+
+// --- partner chat on a lead (GET/POST /me/leads/{id}/messages, GET /me/messages/latest) ---
+export type ChatTag = "counsellor" | "admin";
+
+export interface ChatMessage {
+  id: string;
+  author_kind: "partner" | "staff";
+  author_name: string; // partner org name, or the staff member's name
+  author_role: "partner" | "counsellor" | "team";
+  body: string | null; // null = hidden by staff → "Message removed"
+  is_hidden: boolean;
+  tags: ChatTag[];
+  created_at: string;
+}
+export interface ChatThread {
+  counsellor_name: string | null;
+  items: ChatMessage[]; // oldest first
+}
+export interface ChatPost {
+  body: string;
+  tags: ChatTag[]; // [] = the counsellor
+  client_message_id?: string; // reuse on retry: the server posts it once
+}
+export interface ChatLatest {
+  lead_id: string;
+  last_message_at: string | null;
+  last_staff_message_at: string | null;
+  unread: boolean;
 }
 
 // --- loan pipeline (GET /me/lead-funnel, FundMyCampus only) ---

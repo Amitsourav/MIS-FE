@@ -171,7 +171,7 @@ export function PayoutTable({
 
 const BADGE = "border-transparent font-medium";
 
-export function InvoiceCell({ row }: { row: Row }) {
+function InvoiceCell({ row }: { row: Row }) {
   const pending = isPositive(row.pending);
   let badge: React.ReactNode = null;
   let due: string | null = null;

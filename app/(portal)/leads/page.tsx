@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
-import { useLeads, useStages } from "@/lib/queries";
+import { useLeads, useMessagesLatest, useStages } from "@/lib/queries";
 import { leadsQuery } from "@/lib/filters";
 import { LeadsTable } from "@/components/leads-table";
 import { QueryError } from "@/components/query-error";
@@ -29,6 +29,12 @@ export default function LeadsPage() {
   const leads = useLeads(filters);
   const { data, error } = useLastGood(leads);
   const { tone, learn } = useStageTones(filters);
+  // "New reply" dots. Fails quietly (no dots) while the chat service is down.
+  const latest = useMessagesLatest();
+  const unreadIds = useMemo(
+    () => new Set((latest.data ?? []).filter((m) => m.unread).map((m) => m.lead_id)),
+    [latest.data],
+  );
   useEffect(() => {
     if (data) learn(data.items);
   }, [data, learn]);
@@ -133,6 +139,7 @@ export default function LeadsPage() {
           loading={!data}
           emptyHint="Try a wider date range, another stage, or clear the search."
           stageTone={(l) => tone(l.crm_stage, l.canonical_stage)}
+          unreadIds={unreadIds}
         />
       )}
 

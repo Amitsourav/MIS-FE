@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
@@ -16,7 +17,8 @@ import type { LeadLender, LeadLenderStatus, LeadOut } from "@/lib/types";
 
 const COLS = 8;
 
-const STATUS_CLASSES: Record<LeadLenderStatus, string> = {
+// Bank-stage badge colours; the lead page uses them too.
+export const LENDER_STATUS_CLASSES: Record<LeadLenderStatus, string> = {
   disbursed: "bg-emerald-100 text-emerald-700",
   pf_paid: "bg-blue-100 text-blue-700",
   sanctioned: "bg-blue-100 text-blue-700",
@@ -24,7 +26,7 @@ const STATUS_CLASSES: Record<LeadLenderStatus, string> = {
   lost: "bg-red-50 text-red-600",
 };
 
-export function LenderLine({ lender, className }: { lender: LeadLender; className?: string }) {
+function LenderLine({ lender, className }: { lender: LeadLender; className?: string }) {
   const amount = lender.amount
     ? `${inr(lender.amount)}${lender.amount_kind === "applied" ? " (applied)" : ""}`
     : null;
@@ -38,7 +40,7 @@ export function LenderLine({ lender, className }: { lender: LeadLender; classNam
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            STATUS_CLASSES[lender.status] ?? STATUS_CLASSES.loan_login,
+            LENDER_STATUS_CLASSES[lender.status] ?? LENDER_STATUS_CLASSES.loan_login,
           )}
         >
           {lender.status_label}
@@ -84,11 +86,13 @@ export function LeadsTable({
   loading,
   emptyHint,
   stageTone,
+  unreadIds,
 }: {
   leads: LeadOut[];
   loading: boolean;
   emptyHint?: React.ReactNode;
   stageTone: (lead: LeadOut) => StageTone;
+  unreadIds?: Set<string>; // leads with a staff chat reply the partner hasn't opened
 }) {
   const router = useRouter();
 
@@ -170,6 +174,16 @@ export function LeadsTable({
                     ) : (
                       <span className="text-primary underline-offset-2 group-hover:underline">
                         View lead
+                      </span>
+                    )}
+                    {unreadIds?.has(l.id) && (
+                      <span
+                        className="inline-flex shrink-0 items-center gap-1 text-blue-600"
+                        title="New reply"
+                      >
+                        <span className="h-2 w-2 rounded-full bg-blue-600" />
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only">New reply</span>
                       </span>
                     )}
                   </Link>
