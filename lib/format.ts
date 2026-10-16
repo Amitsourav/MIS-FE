@@ -105,6 +105,12 @@ export function ratePct(rate: string | null | undefined): string | null {
   return Number.isFinite(n) ? `${n}%` : null;
 }
 
+/** GST rate string -> label: "18.00" -> "18%". */
+export function gstPct(rate: string | null | undefined): string {
+  const n = Number(rate);
+  return rate != null && rate !== "" && Number.isFinite(n) ? `${n}%` : "";
+}
+
 /** Signed money: "+₹6,558" / "−₹1,209.41" / "₹0". Display only. */
 export function signedInr(value: string | null | undefined): string {
   if (value == null || value === "") return "—";

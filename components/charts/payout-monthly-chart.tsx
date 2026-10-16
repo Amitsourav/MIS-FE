@@ -134,6 +134,7 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
             month.
           </p>
         )}
+        <p className="text-xs text-muted-foreground">Amounts before GST</p>
       </CardContent>
     </Card>
   );

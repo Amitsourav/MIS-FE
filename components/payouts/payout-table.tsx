@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { TableRowsSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
 import { avatarFor, initials } from "@/lib/avatar";
-import { date, inr, isNegative, isPositive, ratePct, signedInr } from "@/lib/format";
+import { date, gstPct, inr, isNegative, isPositive, ratePct, signedInr } from "@/lib/format";
 import type { PayoutItem } from "@/lib/types";
 
 // Unassigned payouts (admin) also carry FMC's serial no. and the CRM source name.
@@ -33,6 +33,10 @@ export function PayoutTable({
 }) {
   const showTds = items.some((r) => isPositive(r.tds));
   const cols = 13 + (showSource ? 1 : 0) + (showTds ? 2 : 0);
+  // Earned / Pending / Balance show GST on top; hover for the before-GST amount.
+  // The rate is one setting, so any row's rate labels the columns.
+  const withGst = items.length > 0 && items[0].earned_with_gst != null;
+  const plus = withGst ? ` + ${gstPct(items[0].gst_rate)} GST` : "";
   return (
     <div className={cn("bg-card", !bare && "overflow-hidden rounded-xl border shadow-sm")}>
       <Table>
@@ -50,16 +54,16 @@ export function PayoutTable({
               Disbursed so far
             </TableHead>
             <TableHead className={HEAD}>Rate</TableHead>
-            <TableHead className={cn(HEAD, "text-right")}>Earned</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Earned{plus}</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
             {showTds && <TableHead className={cn(HEAD, "text-right")}>TDS</TableHead>}
             {showTds && <TableHead className={cn(HEAD, "whitespace-nowrap text-right")}>Net paid</TableHead>}
-            <TableHead className={cn(HEAD, "text-right")}>Pending</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Pending{plus}</TableHead>
             <TableHead
               className={cn(HEAD, "text-right")}
               title="Earned − paid. + still to be paid; − paid extra, adjusted on the next bill."
             >
-              Balance
+              Balance{plus}
             </TableHead>
             <TableHead className={HEAD}>Invoice</TableHead>
             <TableHead className={cn(HEAD, "whitespace-nowrap")}>Last released on</TableHead>
@@ -119,8 +123,11 @@ export function PayoutTable({
                     </span>
                   )}
                 </TableCell>
-                <TableCell className={cn(MONEY, "font-semibold text-slate-900")}>
-                  {inr(row.earned)}
+                <TableCell
+                  className={cn(MONEY, "font-semibold text-slate-900")}
+                  title={withGst ? `${inr(row.earned)} + ${inr(row.earned_gst)} GST` : undefined}
+                >
+                  {inr(withGst ? row.earned_with_gst : row.earned)}
                 </TableCell>
                 <TableCell className={MONEY}>
                   {inr(row.paid)}
@@ -130,25 +137,29 @@ export function PayoutTable({
                 {showTds && <TableCell className={MONEY}>{inr(row.net_paid)}</TableCell>}
                 <TableCell
                   className={cn(MONEY, isPositive(row.pending) && "font-medium text-amber-600")}
+                  title={withGst ? `Before GST: ${inr(row.pending)}` : undefined}
                 >
-                  {inr(row.pending)}
+                  {inr(withGst ? row.pending_with_gst : row.pending)}
                   {isPositive(row.overpaid) && (
                     <span className="block text-xs font-medium text-destructive">
                       Overpaid {inr(row.overpaid)}
                     </span>
                   )}
                 </TableCell>
-                <TableCell className={MONEY}>
-                  {isPositive(row.balance) || isNegative(row.balance) ? (
+                <TableCell
+                  className={MONEY}
+                  title={withGst ? `Before GST: ${signedInr(row.balance)}` : undefined}
+                >
+                  {isPositive(balanceOf(row, withGst)) || isNegative(balanceOf(row, withGst)) ? (
                     <span
                       className={cn(
                         "inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1",
-                        isPositive(row.balance)
+                        isPositive(balanceOf(row, withGst))
                           ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
                           : "bg-rose-50 text-rose-700 ring-rose-100",
                       )}
                     >
-                      {signedInr(row.balance)}
+                      {signedInr(balanceOf(row, withGst))}
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -167,6 +178,11 @@ export function PayoutTable({
       </Table>
     </div>
   );
+}
+
+// Signed balance to show: with GST once the backend sends it.
+function balanceOf(row: Row, withGst: boolean): string {
+  return withGst ? row.balance_with_gst : row.balance;
 }
 
 const BADGE = "border-transparent font-medium";

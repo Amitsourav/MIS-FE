@@ -303,6 +303,12 @@ export interface PayoutSummary {
   invoice_not_raised: MoneyString; // pending, no bill yet
   invoice_raised: MoneyString; // pending, on a bill not yet due
   invoice_overdue: MoneyString; // pending, on a bill past its due date
+  // With GST on top (the amounts above are before GST). Computed by the backend.
+  gst_rate: MoneyString; // percent, e.g. "18.00" — a setting, never hard-code 18
+  earned_gst: MoneyString; // the GST on earned
+  earned_with_gst: MoneyString; // earned + GST
+  pending_with_gst: MoneyString; // pending + GST
+  balance_with_gst: MoneyString; // balance + GST, SIGNED like balance
 }
 
 export type InvoiceStatus = "raised" | "paid" | "cancelled";
@@ -333,6 +339,12 @@ export interface PayoutItem {
   invoice_due_date: string | null;
   invoice_status: InvoiceStatus | null;
   invoice_state: InvoiceState; // where this row's pending sits
+  // With GST on top (the amounts above are before GST). Computed by the backend.
+  gst_rate: MoneyString; // percent, e.g. "18.00" — a setting, never hard-code 18
+  earned_gst: MoneyString; // the GST on earned
+  earned_with_gst: MoneyString; // earned + GST
+  pending_with_gst: MoneyString; // pending + GST
+  balance_with_gst: MoneyString; // balance + GST, SIGNED like balance
 }
 
 export interface PayoutsResponse {

@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { KpiCardSkeleton } from "@/components/kpi-card";
 import { StatCard } from "./stat-card";
-import { inr, int, isNegative, isPositive, signedInr } from "@/lib/format";
+import { gstPct, inr, int, isNegative, isPositive, signedInr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PayoutSummary } from "@/lib/types";
 
@@ -30,6 +30,18 @@ export function PayoutKpis({
   // Signed net: + FMC still owes, − FMC paid extra (cut from the next bill).
   const hasBalance = summary.balance != null;
   const cards = 4 + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
+  // Earned, Pending and Balance are shown with GST on top (partners bill FMC with
+  // GST). Paid has none. Before the backend sends GST, fall back to plain amounts.
+  const gst = summary.earned_with_gst != null;
+  const plus = gst ? ` + ${gstPct(summary.gst_rate)} GST` : "";
+  const balanceHint = isPositive(summary.balance)
+    ? viewer === "admin"
+      ? "still to pay"
+      : "still to be paid to you"
+    : isNegative(summary.balance)
+      ? "paid extra — adjusts on next bill"
+      : "settled";
+  const balanceSigned = gst ? summary.balance_with_gst : summary.balance;
 
   return (
     <div
@@ -40,9 +52,13 @@ export function PayoutKpis({
     >
       <StatCard
         tone="blue"
-        label="Earned"
-        value={inr(summary.earned)}
-        sub="on money the bank has released"
+        label={`Earned${plus}`}
+        value={inr(gst ? summary.earned_with_gst : summary.earned)}
+        sub={
+          gst
+            ? `${inr(summary.earned)} + ${inr(summary.earned_gst)} GST`
+            : "on money the bank has released"
+        }
         icon={<IndianRupee className="h-4 w-4" />}
       />
       <StatCard
@@ -54,9 +70,15 @@ export function PayoutKpis({
       />
       <StatCard
         tone={hasPending ? "amber" : "slate"}
-        label="Pending"
-        value={inr(summary.pending)}
-        sub={hasPending ? "still to be paid" : "nothing pending"}
+        label={`Pending${plus}`}
+        value={inr(gst ? summary.pending_with_gst : summary.pending)}
+        sub={
+          gst
+            ? `Before GST: ${inr(summary.pending)}`
+            : hasPending
+              ? "still to be paid"
+              : "nothing pending"
+        }
         icon={<Hourglass className="h-4 w-4" />}
       />
       {hasOverpaid && (
@@ -70,24 +92,19 @@ export function PayoutKpis({
       )}
       {hasBalance && (
         <StatCard
-          label="Balance"
-          value={signedInr(summary.balance)}
+          label={`Balance${plus}`}
+          value={signedInr(balanceSigned)}
           sub={
-            isPositive(summary.balance)
-              ? viewer === "admin"
-                ? "still to pay"
-                : "still to be paid to you"
-              : isNegative(summary.balance)
-                ? "paid extra — adjusts on next bill"
-                : "settled"
+            gst ? (
+              <>
+                Before GST: {signedInr(summary.balance)}
+                <span className="block">{balanceHint}</span>
+              </>
+            ) : (
+              balanceHint
+            )
           }
-          tone={
-            isPositive(summary.balance)
-              ? "emerald"
-              : isNegative(summary.balance)
-                ? "rose"
-                : "slate"
-          }
+          tone={isPositive(balanceSigned) ? "emerald" : isNegative(balanceSigned) ? "rose" : "slate"}
           icon={<Scale className="h-4 w-4" />}
         />
       )}
