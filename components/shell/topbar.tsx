@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUrlFilters } from "@/lib/use-filters";
 import { useOverview, useMe } from "@/lib/queries";
@@ -11,6 +10,7 @@ import { DataAsOf } from "./data-as-of";
 import { LogoutButton } from "./logout-button";
 import { BRAND_LABELS } from "@/lib/tokens";
 import { BrandLogo } from "@/components/brand-logo";
+import { AiCallingNav } from "./ai-calling";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -19,9 +19,6 @@ const NAV = [
 ];
 
 const NAV_ITEM = "relative rounded-md px-3 py-1.5 text-sm font-medium transition-colors";
-
-// Demo partner only: the CRM's AI calling (dialpad) screen. Unset = item hidden.
-const AI_CALLING_URL = process.env.NEXT_PUBLIC_CRM_AI_CALLING_URL;
 
 export function Topbar() {
   const pathname = usePathname();
@@ -60,20 +57,15 @@ export function Topbar() {
               </Link>
             );
           })}
-          {/* Sales demos only — real partners never see this. */}
-          {me?.role === "provider" && me?.is_demo === true && AI_CALLING_URL && (
-            <a
-              href={AI_CALLING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+          {/* Every partner: the demo opens the real screen, others contact our team. */}
+          {me?.role === "provider" && (
+            <AiCallingNav
+              isDemo={me.is_demo === true}
               className={cn(
                 NAV_ITEM,
                 "inline-flex items-center text-muted-foreground hover:text-foreground",
               )}
-            >
-              <Phone className="mr-1.5 h-4 w-4" />
-              AI Calling
-            </a>
+            />
           )}
         </nav>
 

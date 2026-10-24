@@ -176,7 +176,7 @@ function EditProviderCard({ id }: { id: string }) {
           <div>
             <p className="text-sm font-medium">Demo</p>
             <p className="text-xs text-muted-foreground">
-              Sales demos only: shows &quot;AI Calling&quot; and is left out of the leaderboard.
+              Sales demos only: opens the real &quot;AI Calling&quot; screen and is left out of the leaderboard.
             </p>
           </div>
           <Switch

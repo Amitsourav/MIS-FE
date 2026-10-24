@@ -323,7 +323,7 @@ export default function ProvidersPage() {
                   <div>
                     <Label htmlFor="is_demo">Demo partner (sales demos only)</Label>
                     <p className="text-xs text-muted-foreground">
-                      Shows &quot;AI Calling&quot; and is left out of the leaderboard.
+                      Opens the real &quot;AI Calling&quot; screen and is left out of the leaderboard.
                     </p>
                   </div>
                   <Switch id="is_demo" checked={formDemo} onCheckedChange={setFormDemo} />
