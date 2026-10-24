@@ -5,6 +5,7 @@ import {
   GraduationCap,
   AlertTriangle,
   Scale,
+  TrendingUp,
 } from "lucide-react";
 import { KpiCardSkeleton } from "@/components/kpi-card";
 import { StatCard } from "./stat-card";
@@ -16,13 +17,16 @@ export type PayoutViewer = "partner" | "admin";
 
 // Totals come straight from the backend summary (covers the whole filtered set,
 // not just the current page). Never sum rows on the client.
-// Order: Earned · Paid · Pending · Overpaid + Balance (only if overpaid) · Students.
+// Order: Revenue (when given) · Earned · Paid · Pending · Overpaid + Balance (only if overpaid) · Students.
 export function PayoutKpis({
   summary,
   viewer = "partner",
+  revenue,
 }: {
   summary: PayoutSummary;
   viewer?: PayoutViewer;
+  // revenue_total from /payouts/monthly (same date filter). Before GST.
+  revenue?: string;
 }) {
   const hasPending = isPositive(summary.pending);
   // Paid above earned (pending can't go below zero). Only shown when it happens.
@@ -31,7 +35,7 @@ export function PayoutKpis({
   // balance = pending − overpaid, so without an overpayment it is just Pending
   // again: show it only when it says something different.
   const hasBalance = summary.balance != null && hasOverpaid;
-  const cards = 4 + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
+  const cards = 4 + (revenue != null ? 1 : 0) + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
   // Earned, Pending and Balance are shown with GST on top (partners bill FMC with
   // GST). Paid has none. Before the backend sends GST, fall back to plain amounts.
   const gst = summary.earned_with_gst != null;
@@ -52,6 +56,15 @@ export function PayoutKpis({
         cards === 6 ? "xl:grid-cols-6" : cards === 5 ? "xl:grid-cols-5" : "xl:grid-cols-4",
       )}
     >
+      {revenue != null && (
+        <StatCard
+          tone="navy"
+          label="Revenue"
+          value={inr(revenue)}
+          sub="on full sanctioned loans · before GST"
+          icon={<TrendingUp className="h-4 w-4" />}
+        />
+      )}
       <StatCard
         tone="blue"
         label={`Earned${plus}`}

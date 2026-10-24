@@ -116,7 +116,11 @@ export function PayoutsPanel({
         <PayoutsNone onShowAllTime={allTime ? undefined : () => onFiltersChange({})} />
       ) : (
         <>
-          <PayoutKpis summary={data.summary} viewer={viewer} />
+          <PayoutKpis
+            summary={data.summary}
+            viewer={viewer}
+            revenue={monthlyQuery.data?.brand_supported ? monthlyQuery.data.revenue_total : undefined}
+          />
           {/* Bar graph and "Where your money is" side by side on desktop, stacked on mobile. */}
           <div className="grid gap-5 lg:grid-cols-3">
             <div className="min-w-0 lg:col-span-2">
