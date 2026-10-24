@@ -1,8 +1,10 @@
-import { parseISO } from "date-fns";
-
 // Formatting helpers. Backend sends rates as 0–1 ratios; pct() renders them.
 
-const numberFmt = new Intl.NumberFormat("en-US");
+const numberFmt = new Intl.NumberFormat("en-IN");
+
+// Times are shown in India time whatever the viewer's browser is set to.
+const LOCALE = "en-IN";
+const IST = "Asia/Kolkata";
 
 /** Render a 0–1 ratio as a percentage string, e.g. 0.123 -> "12.3%". */
 export function pct(n: number | null | undefined, digits = 1): string {
@@ -41,14 +43,16 @@ export function duration(sec: number | null | undefined): string {
 /** Localized date from an ISO string. */
 export function date(iso: string | null | undefined): string {
   if (!iso) return "—";
-  // A bare YYYY-MM-DD is a calendar date: parse it as local, not UTC midnight
-  // (new Date("2026-08-20") renders as Aug 19 west of UTC).
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? parseISO(iso) : new Date(iso);
+  // A bare YYYY-MM-DD is a calendar date, not an instant: render it as-is
+  // (UTC midnight shown in UTC), so no time zone can shift it by a day.
+  const bare = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  const d = new Date(bare ? `${iso}T00:00:00Z` : iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: bare ? "UTC" : IST,
   });
 }
 
@@ -57,11 +61,12 @@ export function dateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(LOCALE, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: IST,
   });
 }
 
@@ -70,7 +75,7 @@ export function timeOnly(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", timeZone: IST });
 }
 
 const inrFmt = new Intl.NumberFormat("en-IN", {
