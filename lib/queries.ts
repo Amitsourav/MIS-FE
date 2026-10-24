@@ -40,6 +40,8 @@ import type {
   PayoutsResponse,
   CrmStageOption,
   PayoutFilters,
+  BillingProfile,
+  BillingProfileIn,
   Invoice,
   InvoiceEligible,
 } from "./types";
@@ -507,4 +509,46 @@ export function useRaiseInvoice() {
       void qc.invalidateQueries({ queryKey: ["invoices"] });
     },
   });
+}
+
+// ---------------- partner billing details (one-time setup) ----------------
+export function useBillingProfile(enabled = true) {
+  return useQuery({
+    queryKey: ["billing-profile"],
+    queryFn: () => get<BillingProfile | null>("/provider/billing-profile"),
+    staleTime: STALE,
+    enabled,
+  });
+}
+
+export function useSaveBillingProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BillingProfileIn) =>
+      api.put<BillingProfile>("/provider/billing-profile", body).then((r) => r.data),
+    onSuccess: (profile) => qc.setQueryData(["billing-profile"], profile),
+  });
+}
+
+/** The invoice PDF as it would be sent (nothing is saved). Errors carry the
+ * server's sentence even though the body was asked for as a blob. */
+export async function previewInvoice(fd: FormData): Promise<Blob> {
+  try {
+    const r = await api.post<Blob>("/provider/invoices/preview", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+      responseType: "blob",
+    });
+    return r.data;
+  } catch (err) {
+    const data = (err as { response?: { data?: unknown } }).response?.data;
+    if (data instanceof Blob) {
+      try {
+        const body = JSON.parse(await data.text()) as { detail?: unknown };
+        if (typeof body.detail === "string") throw new Error(body.detail);
+      } catch (e) {
+        if (e instanceof Error && !(e instanceof SyntaxError)) throw e;
+      }
+    }
+    throw err;
+  }
 }

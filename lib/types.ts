@@ -413,6 +413,34 @@ export interface EligibleStudent {
   on_open_invoices: MoneyString;
   remaining: MoneyString; // what can still be invoiced (before GST)
 }
+// --- partner billing details (one-time setup; GET/PUT /provider/billing-profile) ---
+export interface BillingProfileIn {
+  gst_registered: boolean;
+  legal_name: string;
+  gstin: string | null; // required when gst_registered
+  pan: string; // with a GSTIN it may be left empty: taken from the GSTIN
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state_code: string; // 2-digit GST state code
+  pincode: string;
+  email: string;
+  phone: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_ifsc: string;
+  bank_name: string;
+  bank_branch: string | null;
+  invoice_prefix: string;
+  signatory_name: string | null;
+}
+export interface BillingProfile extends BillingProfileIn {
+  state_name: string;
+  updated_at: string | null;
+  next_invoice_number: string; // suggestion for the next invoice dated today
+  tax_split: "cgst_sgst" | "igst" | "none";
+}
+
 export interface InvoiceEligible {
   gst_rate: MoneyString; // percent, e.g. "18.00"
   items: EligibleStudent[];
