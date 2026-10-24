@@ -97,6 +97,8 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
                 cursor={{ fill: "hsl(var(--muted))" }}
                 contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", fontSize: 12 }}
                 labelFormatter={(_l, payload) => payload?.[0]?.payload.full ?? ""}
+                // Payout first in the hover box, then Revenue (the bars stay in their order).
+                itemSorter={(item) => (item.dataKey === "disbursement" ? 0 : 1)}
                 formatter={(_v, name, item) => {
                   const r = item.payload as (typeof rows)[number];
                   return [name === "Revenue" ? r.revenueText : r.disbursementText, name];
