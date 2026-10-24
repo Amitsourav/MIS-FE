@@ -290,6 +290,7 @@ export type MoneyString = string;
 export type PayoutBasis = "rate" | "agreed";
 
 export interface PayoutSummary {
+  released_total?: MoneyString; // loan money the banks have released so far
   students: number; // distinct students (one student can span several lender rows)
   loan_total: MoneyString;
   earned: MoneyString;
