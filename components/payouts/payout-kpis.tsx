@@ -16,7 +16,7 @@ export type PayoutViewer = "partner" | "admin";
 
 // Totals come straight from the backend summary (covers the whole filtered set,
 // not just the current page). Never sum rows on the client.
-// Order: Earned · Paid · Pending · Overpaid (only if > 0) · Balance · Students.
+// Order: Earned · Paid · Pending · Overpaid + Balance (only if overpaid) · Students.
 export function PayoutKpis({
   summary,
   viewer = "partner",
@@ -28,7 +28,9 @@ export function PayoutKpis({
   // Paid above earned (pending can't go below zero). Only shown when it happens.
   const hasOverpaid = isPositive(summary.overpaid);
   // Signed net: + FMC still owes, − FMC paid extra (cut from the next bill).
-  const hasBalance = summary.balance != null;
+  // balance = pending − overpaid, so without an overpayment it is just Pending
+  // again: show it only when it says something different.
+  const hasBalance = summary.balance != null && hasOverpaid;
   const cards = 4 + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
   // Earned, Pending and Balance are shown with GST on top (partners bill FMC with
   // GST). Paid has none. Before the backend sends GST, fall back to plain amounts.
