@@ -309,6 +309,7 @@ export interface PayoutSummary {
   earned_with_gst: MoneyString; // earned + GST
   pending_with_gst: MoneyString; // pending + GST
   balance_with_gst: MoneyString; // balance + GST, SIGNED like balance
+  paid_with_gst?: MoneyString; // paid + GST (paid itself is before GST)
   // The partner's payout rate (percent) on 'rate' rows; null = none on a rate.
   // varies = several rates, so payout_rate is their weighted average.
   payout_rate?: string | null;
@@ -350,6 +351,7 @@ export interface PayoutItem {
   earned_with_gst: MoneyString; // earned + GST
   pending_with_gst: MoneyString; // pending + GST
   balance_with_gst: MoneyString; // balance + GST, SIGNED like balance
+  paid_with_gst?: MoneyString; // paid + GST (paid itself is before GST)
 }
 
 export interface PayoutsResponse {

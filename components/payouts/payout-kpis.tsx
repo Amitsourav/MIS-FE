@@ -36,8 +36,8 @@ export function PayoutKpis({
   // again: show it only when it says something different.
   const hasBalance = summary.balance != null && hasOverpaid;
   const cards = 4 + (revenue != null ? 1 : 0) + (hasOverpaid ? 1 : 0) + (hasBalance ? 1 : 0);
-  // Earned, Pending and Balance are shown with GST on top (partners bill FMC with
-  // GST). Paid has none. Before the backend sends GST, fall back to plain amounts.
+  // Earned, Paid, Pending and Balance are shown with GST on top, the plain amount
+  // under each. Before the backend sends GST, fall back to plain amounts.
   const gst = summary.earned_with_gst != null;
   const plus = gst ? ` + ${gstPct(summary.gst_rate)} GST` : "";
   const balanceHint = isPositive(summary.balance)
@@ -78,9 +78,13 @@ export function PayoutKpis({
       />
       <StatCard
         tone="emerald"
-        label="Paid (without GST)"
-        value={inr(summary.paid)}
-        sub="by FundMyCampus"
+        label={summary.paid_with_gst != null ? `Paid${plus}` : "Paid (without GST)"}
+        value={inr(summary.paid_with_gst ?? summary.paid)}
+        sub={
+          summary.paid_with_gst != null
+            ? `Without GST: ${inr(summary.paid)} · by FundMyCampus`
+            : "by FundMyCampus"
+        }
         icon={<Wallet className="h-4 w-4" />}
       />
       <StatCard

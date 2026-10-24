@@ -12,6 +12,7 @@ import { PayoutKpis, PayoutKpisSkeleton, type PayoutViewer } from "./payout-kpis
 import { PayoutStatusPie } from "@/components/charts/payout-status-pie";
 import { SectionTitle } from "./stat-card";
 import { PayoutTable } from "./payout-table";
+import { GstSwitch } from "./gst-switch";
 import { PayoutsNone, PayoutsUnsupported } from "./payout-empty";
 import { QueryError } from "@/components/query-error";
 import { statusOf } from "@/lib/api";
@@ -209,28 +210,3 @@ function MonthlySection({ query }: { query: UseQueryResult<PayoutMonthlyResponse
   return <PayoutMonthlyChart data={data} />;
 }
 
-// Two-option switch: "With GST" | "Without GST".
-function GstSwitch({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div role="group" aria-label="GST" className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs font-medium">
-      {[
-        { on: true, label: "With GST" },
-        { on: false, label: "Without GST" },
-      ].map((o) => (
-        <button
-          key={o.label}
-          type="button"
-          aria-pressed={value === o.on}
-          onClick={() => onChange(o.on)}
-          className={
-            value === o.on
-              ? "rounded-md bg-white px-2.5 py-1 text-slate-900 shadow-sm"
-              : "rounded-md px-2.5 py-1 text-muted-foreground hover:text-slate-900"
-          }
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}

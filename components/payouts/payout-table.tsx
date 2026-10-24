@@ -66,7 +66,7 @@ export function PayoutTable({
             </TableHead>
             <TableHead className={HEAD}>Rate</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Earned{plus}</TableHead>
-            <TableHead className={cn(HEAD, "text-right")}>Paid (without GST)</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Paid{plus}</TableHead>
             {showTds && <TableHead className={cn(HEAD, "text-right")}>TDS</TableHead>}
             {showTds && <TableHead className={cn(HEAD, "whitespace-nowrap text-right")}>Net paid</TableHead>}
             <TableHead className={cn(HEAD, "text-right")}>Pending{plus}</TableHead>
@@ -138,8 +138,11 @@ export function PayoutTable({
                 >
                   {inr(withGst ? row.earned_with_gst : row.earned)}
                 </TableCell>
-                <TableCell className={MONEY}>
-                  {inr(row.paid)}
+                <TableCell
+                  className={MONEY}
+                  title={withGst && row.paid_with_gst != null ? `Without GST: ${inr(row.paid)}` : undefined}
+                >
+                  {inr(withGst && row.paid_with_gst != null ? row.paid_with_gst : row.paid)}
                   {row.paid_on && <span className={SUB}>on {date(row.paid_on)}</span>}
                 </TableCell>
                 {showTds && <TableCell className={MONEY}>{inr(row.tds)}</TableCell>}

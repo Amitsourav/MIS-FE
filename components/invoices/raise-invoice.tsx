@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GstSwitch } from "@/components/payouts/gst-switch";
 import type { EligibleStudent } from "@/lib/types";
 
 const MAX_PDF_BYTES = 4 * 1024 * 1024;
@@ -95,6 +96,8 @@ function RaiseInvoiceDialog({
 
   const [ticked, setTicked] = useState<Set<string>>(() => new Set(items.map((s) => s.lead_bank_id)));
   const [number, setNumber] = useState("");
+  // The partner chooses: bill with GST (default) or without (e.g. not GST-registered).
+  const [withGst, setWithGst] = useState(true);
   const [invoiceDate, setInvoiceDate] = useState(today);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -115,13 +118,13 @@ function RaiseInvoiceDialog({
     const payouts = items
       .filter((s) => ticked.has(s.lead_bank_id))
       .reduce((sum, s) => sum + toPaise(s.remaining), 0);
-    const gst = gstPaise(payouts, gstRate);
+    const gst = withGst ? gstPaise(payouts, gstRate) : 0;
     return {
       payouts: paiseToMoney(payouts),
       gst: paiseToMoney(gst),
       total: paiseToMoney(payouts + gst),
     };
-  }, [items, ticked, gstRate]);
+  }, [items, ticked, gstRate, withGst]);
 
   function toggle(id: string) {
     setTicked((prev) => {
@@ -166,6 +169,7 @@ function RaiseInvoiceDialog({
       ),
     );
     fd.append("client_invoice_id", clientInvoiceId);
+    fd.append("with_gst", withGst ? "true" : "false");
     fd.append("pdf", file);
     raise.mutate(fd, {
       onSettled: () => {
@@ -209,7 +213,7 @@ function RaiseInvoiceDialog({
             <div className="min-w-0 flex-1">
               <DialogPrimitive.Title className="font-semibold leading-tight">Raise invoice</DialogPrimitive.Title>
               <p className="text-sm text-muted-foreground">
-                Bill FundMyCampus for your payouts + {gstPct(gstRate)} GST.
+                Bill FundMyCampus for your payouts, with or without GST.
               </p>
             </div>
             <DialogPrimitive.Close asChild>
@@ -337,13 +341,22 @@ function RaiseInvoiceDialog({
           </div>
 
           <div className="space-y-3 border-t bg-slate-50/80 px-5 py-4 sm:rounded-b-xl">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium">GST on this invoice</span>
+              <GstSwitch
+                value={withGst}
+                onChange={setWithGst}
+                withLabel={`With ${gstPct(gstRate)} GST`}
+                disabled={raise.isPending}
+              />
+            </div>
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Payouts (without GST)</dt>
                 <dd className="tabular-nums">{inr(totals.payouts)}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">GST {gstPct(gstRate)}</dt>
+                <dt className="text-muted-foreground">GST {withGst ? gstPct(gstRate) : "(not charged)"}</dt>
                 <dd className="tabular-nums">{inr(totals.gst)}</dd>
               </div>
               <div className="flex justify-between gap-4 border-t pt-1.5 font-semibold">
