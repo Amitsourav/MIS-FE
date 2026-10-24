@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarRange, Download, Info, ListChecks } from "lucide-react";
+import { useState } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -54,6 +55,8 @@ export function PayoutsPanel({
   // Keeps the last good response on screen (with a toast) if a refresh fails.
   const { data, error } = useLastGood(query, "Couldn't refresh payouts");
   const allTime = !filters.date_from && !filters.date_to;
+  // Payout details: Earned / Pending / Balance with or without GST.
+  const [withGst, setWithGst] = useState(true);
 
   if (!data) {
     if (error) {
@@ -136,9 +139,12 @@ export function PayoutsPanel({
                 title="Payout details"
                 description="One row per student and lender, latest release first."
                 right={
-                  <span className="self-start rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
-                    {int(data.total)} {data.total === 1 ? "row" : "rows"}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2 self-start">
+                    <GstSwitch value={withGst} onChange={setWithGst} />
+                    <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
+                      {int(data.total)} {data.total === 1 ? "row" : "rows"}
+                    </span>
+                  </div>
                 }
               />
             </div>
@@ -147,6 +153,7 @@ export function PayoutsPanel({
               loading={false}
               bare
               leadLinks={viewer === "partner"}
+              gst={withGst}
             />
             <div className="border-t px-4 py-3">
               <Pagination
@@ -200,4 +207,30 @@ function MonthlySection({ query }: { query: UseQueryResult<PayoutMonthlyResponse
   const hasNotes = data.revenue_dated_by_first_release > 0 || isPositive(data.revenue_undated);
   if (data.months.length === 0 && !hasNotes) return null;
   return <PayoutMonthlyChart data={data} />;
+}
+
+// Two-option switch: "With GST" | "Without GST".
+function GstSwitch({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div role="group" aria-label="GST" className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-xs font-medium">
+      {[
+        { on: true, label: "With GST" },
+        { on: false, label: "Without GST" },
+      ].map((o) => (
+        <button
+          key={o.label}
+          type="button"
+          aria-pressed={value === o.on}
+          onClick={() => onChange(o.on)}
+          className={
+            value === o.on
+              ? "rounded-md bg-white px-2.5 py-1 text-slate-900 shadow-sm"
+              : "rounded-md px-2.5 py-1 text-muted-foreground hover:text-slate-900"
+          }
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
 }

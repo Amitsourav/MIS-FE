@@ -28,19 +28,26 @@ export function PayoutTable({
   showSource = false,
   bare = false,
   leadLinks = false,
+  gst = true,
 }: {
   items: Row[];
   loading: boolean;
   showSource?: boolean;
   bare?: boolean; // no own border: the parent card provides it
   leadLinks?: boolean;
+  gst?: boolean; // the "With GST / Without GST" switch above the table
 }) {
   const showTds = items.some((r) => isPositive(r.tds));
   const cols = 13 + (showSource ? 1 : 0) + (showTds ? 2 : 0);
   // Earned / Pending / Balance show GST on top; hover for the before-GST amount.
   // The rate is one setting, so any row's rate labels the columns.
-  const withGst = items.length > 0 && items[0].earned_with_gst != null;
-  const plus = withGst ? ` + ${gstPct(items[0].gst_rate)} GST` : "";
+  const hasGst = items.length > 0 && items[0].earned_with_gst != null;
+  const withGst = hasGst && gst;
+  const plus = withGst
+    ? ` + ${gstPct(items[0].gst_rate)} GST`
+    : hasGst
+      ? " (without GST)"
+      : "";
   return (
     <div className={cn("bg-card", !bare && "overflow-hidden rounded-xl border shadow-sm")}>
       <Table>
