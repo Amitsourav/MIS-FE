@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck, Trophy } from "lucide-react";
+import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
 import { useOverview, useTrends, useBrandSplit, useQuality, useLeadFunnel } from "@/lib/queries";
 import { KpiCardSkeleton } from "@/components/kpi-card";
 import { StatCard } from "@/components/payouts/stat-card";
-import { GradeBadge } from "@/components/grade-badge";
 import { FunnelChart } from "@/components/charts/funnel-chart";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { BrandSplitChart } from "@/components/charts/brand-split-chart";
@@ -39,6 +38,9 @@ export default function DashboardPage() {
   const lf = useLastGood(leadFunnel);
 
   const o = ov.data;
+  // FundMyCampus partners get the Loan pipeline; the canonical Conversion
+  // Funnel is only for Admitverse (it would repeat the same counts).
+  const loanPipeline = lf.data?.brand_supported;
   const showBrandSplit = (bs.data?.rows.length ?? 0) > 1;
 
   function cardError(error: unknown, retry: () => unknown) {
@@ -56,7 +58,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-primary">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Performance of the leads you supplied across both CRMs.
+          Performance of the leads you supplied.
         </p>
       </div>
 
@@ -75,23 +77,23 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             {!o ? (
-              Array.from({ length: 6 }).map((_, i) => <KpiCardSkeleton key={i} />)
+              Array.from({ length: 5 }).map((_, i) => <KpiCardSkeleton key={i} />)
             ) : (
               <>
                 <StatCard
                   tone="navy"
                   label="Delivered"
                   value={int(o.funnel.delivered)}
-                  sub={`${int(o.quality.valid)} valid`}
+                  sub="leads sent"
                   icon={<Inbox className="h-4 w-4" />}
                 />
                 <StatCard
                   tone="teal"
                   label="Valid %"
                   value={pct(ratio(o.quality.valid, o.quality.delivered), 0)}
-                  sub={`${int(o.quality.invalid)} invalid · ${int(o.quality.duplicates)} dup`}
+                  sub={`${int(o.quality.valid)} of ${int(o.quality.delivered)} valid`}
                   icon={<ShieldCheck className="h-4 w-4" />}
                 />
                 <StatCard
@@ -115,19 +117,6 @@ export default function DashboardPage() {
                   sub={`contact ${pct(o.rates.contact_rate)}`}
                   icon={<TrendingUp className="h-4 w-4" />}
                 />
-                <StatCard
-                  tone="amber"
-                  label="Scorecard"
-                  value={o.scorecard ? pct(o.scorecard.score_pct / 100, 0) : "—"}
-                  sub="overall grade"
-                  icon={<Trophy className="h-4 w-4" />}
-                >
-                  {o.scorecard && (
-                    <div className="mt-2">
-                      <GradeBadge grade={o.scorecard.grade} />
-                    </div>
-                  )}
-                </StatCard>
               </>
             )}
           </div>
@@ -169,9 +158,9 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <>
-              {/* Funnel + Trend */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                {!o ? <ChartSkeleton /> : <FunnelChart funnel={o.funnel} />}
+              {/* Funnel (Admitverse only; FMC has the Loan pipeline above) + Trend */}
+              <div className={loanPipeline ? "grid gap-6" : "grid gap-6 lg:grid-cols-2"}>
+                {loanPipeline ? null : !o || (!lf.data && !lf.error) ? <ChartSkeleton /> : <FunnelChart funnel={o.funnel} />}
                 {tr.error ? (
                   cardError(tr.error, trends.refetch)
                 ) : !tr.data ? (
