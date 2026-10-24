@@ -36,7 +36,8 @@ export function parseFilters(sp: URLSearchParams): Filters {
     brand: ["fmc", "av", "both"].includes(brand) ? brand : "both",
     from: sp.get("from") || dFrom,
     to: sp.get("to") || dTo,
-    allTime: sp.get("all_time") === "1",
+    // No dates in the URL means all time: that is the default view.
+    allTime: sp.get("all_time") === "1" || (!sp.get("from") && !sp.get("to")),
     crmStage: sp.get("crm_stage") || "",
     q: sp.get("q") || "",
     page: sp.get("page") ? Number(sp.get("page")) : 1,
