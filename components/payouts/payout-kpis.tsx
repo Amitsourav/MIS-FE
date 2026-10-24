@@ -125,7 +125,7 @@ export function PayoutKpis({
       )}
       <StatCard
         tone="teal"
-        label="Students"
+        label="Disbursed students"
         value={int(summary.students)}
         sub={`${inr(summary.loan_total)} in loans`}
         icon={<GraduationCap className="h-4 w-4" />}
