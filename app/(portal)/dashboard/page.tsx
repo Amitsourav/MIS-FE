@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck } from "lucide-react";
+import { Inbox, Users, CheckCircle2, TrendingUp, ShieldCheck, Percent } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
-import { useOverview, useTrends, useBrandSplit, useQuality, useLeadFunnel } from "@/lib/queries";
+import {
+  useOverview,
+  useTrends,
+  useBrandSplit,
+  useQuality,
+  useLeadFunnel,
+  usePayouts,
+} from "@/lib/queries";
 import { KpiCardSkeleton } from "@/components/kpi-card";
 import { StatCard } from "@/components/payouts/stat-card";
 import { FunnelChart } from "@/components/charts/funnel-chart";
@@ -18,7 +25,7 @@ import { ChartSkeleton, PanelSkeleton } from "@/components/skeletons";
 import { QueryError } from "@/components/query-error";
 import { useLastGood } from "@/lib/use-last-good";
 import { Card, CardContent } from "@/components/ui/card";
-import { int, pct, ratio } from "@/lib/format";
+import { int, pct, ratePct, ratio } from "@/lib/format";
 
 export default function DashboardPage() {
   const { filters, setFilters } = useUrlFilters();
@@ -29,6 +36,8 @@ export default function DashboardPage() {
   const brandSplit = useBrandSplit(filters);
   const quality = useQuality(filters);
   const leadFunnel = useLeadFunnel(filters);
+  // Payout rate tile: all time, first page (shares the Payout page's cache).
+  const payouts = usePayouts({}, 1, 50);
 
   // Each panel keeps its last good data if a live refresh fails.
   const ov = useLastGood(overview);
@@ -42,6 +51,9 @@ export default function DashboardPage() {
   // Funnel is only for Admitverse (it would repeat the same counts).
   const loanPipeline = lf.data?.brand_supported;
   const showBrandSplit = (bs.data?.rows.length ?? 0) > 1;
+  const pay = payouts.data?.brand_supported ? payouts.data.summary : undefined;
+  const payoutRate = ratePct(pay?.payout_rate);
+  const cards = payoutRate ? 6 : 5;
 
   function cardError(error: unknown, retry: () => unknown) {
     return (
@@ -77,9 +89,15 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <div
+            className={
+              cards === 6
+                ? "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6"
+                : "grid grid-cols-2 gap-4 lg:grid-cols-5"
+            }
+          >
             {!o ? (
-              Array.from({ length: 5 }).map((_, i) => <KpiCardSkeleton key={i} />)
+              Array.from({ length: cards }).map((_, i) => <KpiCardSkeleton key={i} />)
             ) : (
               <>
                 <StatCard
@@ -117,6 +135,19 @@ export default function DashboardPage() {
                   sub={`contact ${pct(o.rates.contact_rate)}`}
                   icon={<TrendingUp className="h-4 w-4" />}
                 />
+                {payoutRate && (
+                  <StatCard
+                    tone="amber"
+                    label="Payout rate"
+                    value={payoutRate}
+                    sub={
+                      pay?.payout_rate_varies
+                        ? "average · on money the bank releases"
+                        : "on money the bank releases"
+                    }
+                    icon={<Percent className="h-4 w-4" />}
+                  />
+                )}
               </>
             )}
           </div>

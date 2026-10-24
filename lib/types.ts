@@ -309,6 +309,10 @@ export interface PayoutSummary {
   earned_with_gst: MoneyString; // earned + GST
   pending_with_gst: MoneyString; // pending + GST
   balance_with_gst: MoneyString; // balance + GST, SIGNED like balance
+  // The partner's payout rate (percent) on 'rate' rows; null = none on a rate.
+  // varies = several rates, so payout_rate is their weighted average.
+  payout_rate?: string | null;
+  payout_rate_varies?: boolean;
 }
 
 export type InvoiceStatus = "raised" | "paid" | "cancelled";
