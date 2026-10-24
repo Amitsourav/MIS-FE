@@ -69,7 +69,7 @@ export function MyInvoices() {
                   <TableHead>Invoice no.</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Students</TableHead>
-                  <TableHead className="text-right">Payouts</TableHead>
+                  <TableHead className="text-right">Payouts (without GST)</TableHead>
                   <TableHead className="text-right">GST</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead>Status</TableHead>
@@ -153,7 +153,7 @@ export function MyInvoices() {
                   </button>
                   <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
                     <span className="tabular-nums">
-                      Payouts {inr(inv.lines_total)} · GST {inr(inv.gst_amount)}
+                      Payouts {inr(inv.lines_total)} without GST · GST {inr(inv.gst_amount)}
                     </span>
                     <PdfLink inv={inv} />
                   </div>

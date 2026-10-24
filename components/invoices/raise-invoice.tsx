@@ -236,7 +236,7 @@ function RaiseInvoiceDialog({
                   Select all
                 </label>
                 <span className="text-xs text-muted-foreground">
-                  {ticked.size} of {items.length} students
+                  {ticked.size} of {items.length} students · amounts without GST
                 </span>
               </div>
               <ul className="divide-y rounded-lg border">
@@ -339,7 +339,7 @@ function RaiseInvoiceDialog({
           <div className="space-y-3 border-t bg-slate-50/80 px-5 py-4 sm:rounded-b-xl">
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Payouts</dt>
+                <dt className="text-muted-foreground">Payouts (without GST)</dt>
                 <dd className="tabular-nums">{inr(totals.payouts)}</dd>
               </div>
               <div className="flex justify-between gap-4">

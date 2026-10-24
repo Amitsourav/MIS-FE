@@ -111,7 +111,7 @@ export function PayoutStatusPie({ summary }: { summary: PayoutSummary }) {
             )}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">Amounts before GST</p>
+        <p className="text-xs text-muted-foreground">Amounts without GST</p>
       </CardContent>
     </Card>
   );

@@ -17,14 +17,14 @@ import { SectionTitle } from "@/components/payouts/stat-card";
 import { inr, inrCompact, int, isPositive } from "@/lib/format";
 import type { PayoutMonthlyResponse } from "@/lib/types";
 
-const DISBURSEMENT = "#2563eb"; // blue-600 — the primary series
+const PAYOUT = "#2563eb"; // blue-600 — the primary series
 const REVENUE = "#bfdbfe"; // blue-200 — a lighter shade of the same
 
 function monthDate(m: string) {
   return parse(m, "yyyy-MM", new Date());
 }
 
-// Revenue vs Disbursement by month: 2 grouped bars per month on one ₹ axis.
+// Revenue vs Payout by month: 2 grouped bars per month on one ₹ axis.
 // Values are the API's own; Number() is only for bar heights, inr() for text.
 export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
   const rows = data.months.map((m) => ({
@@ -44,12 +44,12 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
         <SectionTitle
           tone="blue"
           icon={<BarChart3 className="h-4 w-4" />}
-          title="Revenue vs Disbursement"
+          title="Revenue vs Payout"
           description={
             <>
               <span className="font-medium text-blue-400">Revenue</span>: what you&rsquo;ll
               earn on the full sanctioned loan, in the month it was sanctioned.{" "}
-              <span className="font-medium text-blue-700">Disbursement</span>: what
+              <span className="font-medium text-blue-700">Payout</span>: what
               you&rsquo;ve earned so far on money the bank has released, in the month of each
               release.
             </>
@@ -63,7 +63,7 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
           </span>
           <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs text-blue-50 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-white/80" />
-            Disbursement
+            Payout
             <span className="text-sm font-semibold tabular-nums text-white">
               {inr(data.disbursement_total)}
             </span>
@@ -77,7 +77,7 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
               <defs>
                 <linearGradient id="pm-disb" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="100%" stopColor={DISBURSEMENT} />
+                  <stop offset="100%" stopColor={PAYOUT} />
                 </linearGradient>
                 <linearGradient id="pm-rev" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#dbeafe" />
@@ -113,7 +113,7 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
               />
               <Bar
                 dataKey="disbursement"
-                name="Disbursement"
+                name="Payout"
                 fill="url(#pm-disb)"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={36}
@@ -134,7 +134,7 @@ export function PayoutMonthlyChart({ data }: { data: PayoutMonthlyResponse }) {
             month.
           </p>
         )}
-        <p className="text-xs text-muted-foreground">Amounts before GST</p>
+        <p className="text-xs text-muted-foreground">Amounts without GST</p>
       </CardContent>
     </Card>
   );

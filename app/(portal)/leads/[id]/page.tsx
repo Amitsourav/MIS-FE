@@ -489,7 +489,7 @@ function PayoutLine({
       )}
     >
       <span className="font-semibold text-emerald-800">
-        Your payout{withBank && item.bank_name ? ` · ${item.bank_name}` : ""}
+        Your payout (without GST){withBank && item.bank_name ? ` · ${item.bank_name}` : ""}
       </span>
       <span>
         <span className="text-muted-foreground">Earned </span>

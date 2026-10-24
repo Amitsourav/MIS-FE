@@ -55,7 +55,7 @@ export function PayoutTable({
             </TableHead>
             <TableHead className={HEAD}>Rate</TableHead>
             <TableHead className={cn(HEAD, "text-right")}>Earned{plus}</TableHead>
-            <TableHead className={cn(HEAD, "text-right")}>Paid</TableHead>
+            <TableHead className={cn(HEAD, "text-right")}>Paid (without GST)</TableHead>
             {showTds && <TableHead className={cn(HEAD, "text-right")}>TDS</TableHead>}
             {showTds && <TableHead className={cn(HEAD, "whitespace-nowrap text-right")}>Net paid</TableHead>}
             <TableHead className={cn(HEAD, "text-right")}>Pending{plus}</TableHead>
@@ -137,7 +137,7 @@ export function PayoutTable({
                 {showTds && <TableCell className={MONEY}>{inr(row.net_paid)}</TableCell>}
                 <TableCell
                   className={cn(MONEY, isPositive(row.pending) && "font-medium text-amber-600")}
-                  title={withGst ? `Before GST: ${inr(row.pending)}` : undefined}
+                  title={withGst ? `Without GST: ${inr(row.pending)}` : undefined}
                 >
                   {inr(withGst ? row.pending_with_gst : row.pending)}
                   {isPositive(row.overpaid) && (
@@ -148,7 +148,7 @@ export function PayoutTable({
                 </TableCell>
                 <TableCell
                   className={MONEY}
-                  title={withGst ? `Before GST: ${signedInr(row.balance)}` : undefined}
+                  title={withGst ? `Without GST: ${signedInr(row.balance)}` : undefined}
                 >
                   {isPositive(balanceOf(row, withGst)) || isNegative(balanceOf(row, withGst)) ? (
                     <span

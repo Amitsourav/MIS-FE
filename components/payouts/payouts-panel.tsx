@@ -170,7 +170,7 @@ export function PayoutsPanel({
   );
 }
 
-// Revenue vs Disbursement card, same date filter as the table. Hidden for brands
+// Revenue vs Payout card, same date filter as the table. Hidden for brands
 // without payouts, and when there are no months and no note to show.
 function MonthlySection({ query }: { query: UseQueryResult<PayoutMonthlyResponse> }) {
   const { data, error } = useLastGood(query, "Couldn't refresh payouts");

@@ -61,7 +61,7 @@ export function PayoutKpis({
           tone="navy"
           label="Revenue"
           value={inr(revenue)}
-          sub="on full sanctioned loans · before GST"
+          sub="on full sanctioned loans · without GST"
           icon={<TrendingUp className="h-4 w-4" />}
         />
       )}
@@ -78,7 +78,7 @@ export function PayoutKpis({
       />
       <StatCard
         tone="emerald"
-        label="Paid"
+        label="Paid (without GST)"
         value={inr(summary.paid)}
         sub="by FundMyCampus"
         icon={<Wallet className="h-4 w-4" />}
@@ -89,7 +89,7 @@ export function PayoutKpis({
         value={inr(gst ? summary.pending_with_gst : summary.pending)}
         sub={
           gst
-            ? `Before GST: ${inr(summary.pending)}`
+            ? `Without GST: ${inr(summary.pending)}`
             : hasPending
               ? "still to be paid"
               : "nothing pending"
@@ -112,7 +112,7 @@ export function PayoutKpis({
           sub={
             gst ? (
               <>
-                Before GST: {signedInr(summary.balance)}
+                Without GST: {signedInr(summary.balance)}
                 <span className="block">{balanceHint}</span>
               </>
             ) : (
