@@ -390,3 +390,48 @@ export interface UnmappedPayoutsResponse {
   items: UnmappedPayoutItem[];
   total: number;
 }
+
+// --- partner invoices (FundMyCampus only; /provider/invoices*) ---
+// Amounts are before GST except gst_amount, amount and net_amount.
+export interface EligibleStudent {
+  lead_bank_id: string;
+  lead_id: string;
+  lead_no: number | null; // the partner's own #N, as on Leads
+  full_name: string | null;
+  bank_name: string | null; // null → "—"
+  released: MoneyString; // what the bank released
+  payout_due: MoneyString;
+  payout_paid: MoneyString;
+  on_open_invoices: MoneyString;
+  remaining: MoneyString; // what can still be invoiced (before GST)
+}
+export interface InvoiceEligible {
+  gst_rate: MoneyString; // percent, e.g. "18.00"
+  items: EligibleStudent[];
+}
+
+export interface InvoiceLine {
+  lead_id: string | null;
+  lead_no: number | null;
+  full_name: string | null;
+  bank_name: string | null;
+  amount: MoneyString; // before GST
+}
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  invoice_date: string; // YYYY-MM-DD
+  due_date: string | null;
+  lines_total: MoneyString; // before GST
+  gst_rate: MoneyString;
+  gst_amount: MoneyString;
+  amount: MoneyString; // total billed = lines_total + gst_amount
+  tds_amount: MoneyString;
+  net_amount: MoneyString; // amount − TDS
+  status: "raised" | "paid" | "cancelled";
+  paid_on: string | null;
+  raised_via: "mis" | "crm"; // crm = entered by FMC
+  has_pdf: boolean;
+  created_at: string | null;
+  lines: InvoiceLine[];
+}

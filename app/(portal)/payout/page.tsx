@@ -3,8 +3,16 @@
 import { useSearchParams } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { useUrlFilters } from "@/lib/use-filters";
-import { usePayouts, usePayoutsMonthly, payoutsExportUrl } from "@/lib/queries";
+import {
+  usePayouts,
+  usePayoutsMonthly,
+  payoutsExportUrl,
+  useInvoiceEligible,
+  useInvoices,
+} from "@/lib/queries";
 import { PayoutsPanel } from "@/components/payouts/payouts-panel";
+import { RaiseInvoiceButton } from "@/components/invoices/raise-invoice";
+import { MyInvoices } from "@/components/invoices/my-invoices";
 import { PAGE_SIZES } from "@/components/pagination";
 import type { PayoutFilters } from "@/lib/types";
 
@@ -35,6 +43,9 @@ export default function PayoutPage() {
   const { filters, page, pageSize } = readPayoutParams(new URLSearchParams(searchParams.toString()));
   const query = usePayouts(filters, page, pageSize);
   const monthlyQuery = usePayoutsMonthly(filters);
+  // Start the invoice calls with the page; the button and "My invoices" share the cache.
+  useInvoiceEligible();
+  useInvoices();
 
   return (
     <div className="space-y-5">
@@ -66,6 +77,9 @@ export default function PayoutPage() {
         onPageChange={(p) => setFilters({ page: p })}
         onPageSizeChange={(n) => setFilters({ page_size: n, page: 1 })}
         exportHref={payoutsExportUrl(filters)}
+        // Only rendered when the brand has payouts, so never for Admitverse.
+        actions={<RaiseInvoiceButton />}
+        footer={<MyInvoices />}
       />
     </div>
   );

@@ -35,6 +35,8 @@ export function PayoutsPanel({
   onPageSizeChange,
   exportHref,
   viewer = "partner",
+  actions,
+  footer,
 }: {
   query: UseQueryResult<PayoutsResponse>;
   monthlyQuery: UseQueryResult<PayoutMonthlyResponse>;
@@ -46,6 +48,8 @@ export function PayoutsPanel({
   onPageSizeChange: (pageSize: number) => void;
   exportHref?: string;
   viewer?: PayoutViewer;
+  actions?: React.ReactNode; // next to Export CSV (partner: "Raise invoice")
+  footer?: React.ReactNode; // below the payout table (partner: "My invoices")
 }) {
   // Keeps the last good response on screen (with a toast) if a refresh fails.
   const { data, error } = useLastGood(query, "Couldn't refresh payouts");
@@ -88,8 +92,9 @@ export function PayoutsPanel({
           />
           <span className="text-xs text-muted-foreground">Filtered by release date</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <DataAsOf value={data.data_as_of} />
+          {actions}
           {exportHref !== undefined && (
             <Button
               size="sm"
@@ -147,6 +152,8 @@ export function PayoutsPanel({
           </Card>
         </>
       )}
+
+      {footer}
 
       <div className="flex gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-sky-900">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />

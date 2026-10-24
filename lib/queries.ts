@@ -40,6 +40,8 @@ import type {
   PayoutsResponse,
   CrmStageOption,
   PayoutFilters,
+  Invoice,
+  InvoiceEligible,
 } from "./types";
 
 const STALE = 45_000;
@@ -464,5 +466,45 @@ export function useCreateAdmin() {
     mutationFn: (body: AdminCreate) =>
       api.post<AdminCreated>("/admin/admins", body).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admins"] }),
+  });
+}
+
+// ---------------- partner invoices (FundMyCampus only) ----------------
+export function useInvoiceEligible() {
+  return useQuery({
+    queryKey: ["invoices", "eligible"],
+    queryFn: () => get<InvoiceEligible>("/provider/invoices/eligible"),
+    staleTime: STALE,
+  });
+}
+
+export function useInvoices() {
+  return useQuery({
+    queryKey: ["invoices", "list"],
+    queryFn: () => get<Invoice[]>("/provider/invoices"),
+    staleTime: STALE,
+  });
+}
+
+export function invoicePdfUrl(id: string): string {
+  return `/api/provider/invoices/${encodeURIComponent(id)}/pdf`;
+}
+
+// Multipart: the axios instance defaults to JSON, which would turn FormData into
+// JSON, so say multipart here; the browser then adds the boundary itself.
+export function useRaiseInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (fd: FormData) =>
+      api
+        .post<Invoice>("/provider/invoices", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+        .then((r) => r.data),
+    onSuccess: () => {
+      // The students now sit under "Invoice raised" in the pie and table.
+      void qc.invalidateQueries({ queryKey: ["payouts"] });
+      void qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
   });
 }
