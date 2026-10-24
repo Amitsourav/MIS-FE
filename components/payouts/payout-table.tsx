@@ -6,6 +6,7 @@ import { TableRowsSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
 import { avatarFor, initials } from "@/lib/avatar";
 import { date, gstPct, inr, isNegative, isPositive, ratePct, signedInr } from "@/lib/format";
+import { NEW_TAB, leadHref, openLeadRow } from "@/lib/lead-nav";
 import type { PayoutItem } from "@/lib/types";
 
 // Unassigned payouts (admin) also carry FMC's serial no. and the CRM source name.
@@ -20,16 +21,19 @@ const SUB = "block text-xs font-normal text-muted-foreground";
 // Headers are deliberately plain: there is no client-side sorting.
 // `showSource` adds a CRM source column (admin "Unassigned payouts").
 // TDS / Net paid only appear when some row on this page has TDS.
+// `leadLinks` (partner only): a row opens its lead page in a new tab.
 export function PayoutTable({
   items,
   loading,
   showSource = false,
   bare = false,
+  leadLinks = false,
 }: {
   items: Row[];
   loading: boolean;
   showSource?: boolean;
   bare?: boolean; // no own border: the parent card provides it
+  leadLinks?: boolean;
 }) {
   const showTds = items.some((r) => isPositive(r.tds));
   const cols = 13 + (showSource ? 1 : 0) + (showTds ? 2 : 0);
@@ -73,10 +77,14 @@ export function PayoutTable({
           {loading ? (
             <TableRowsSkeleton rows={6} cols={cols} />
           ) : (
-            items.map((row, i) => (
+            items.map((row, i) => {
+              const leadId = leadLinks ? row.lead_id : null;
+              return (
               <TableRow
                 key={`${row.lead_no ?? row.serial_no ?? "na"}-${row.bank_name ?? "na"}-${i}`}
-                className="even:bg-slate-50/40 hover:bg-blue-50/40"
+                className={cn("even:bg-slate-50/40 hover:bg-blue-50/40", leadId && "cursor-pointer")}
+                onClick={leadId ? (e) => openLeadRow(e, leadId) : undefined}
+                onAuxClick={leadId ? (e) => e.button === 1 && openLeadRow(e, leadId) : undefined}
               >
                 <TableCell className="tabular-nums text-muted-foreground">
                   {row.lead_no ?? row.serial_no ?? "—"}
@@ -86,17 +94,11 @@ export function PayoutTable({
                 )}
                 <TableCell>
                   {row.full_name ? (
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                          avatarFor(row.full_name),
-                        )}
-                      >
-                        {initials(row.full_name)}
-                      </span>
-                      <span className="font-medium text-slate-900">{row.full_name}</span>
-                    </div>
+                    <StudentName name={row.full_name} href={leadId ? leadHref(leadId) : undefined} />
+                  ) : leadId ? (
+                    <a href={leadHref(leadId)} {...NEW_TAB} className="text-primary hover:underline">
+                      Open lead
+                    </a>
                   ) : (
                     "—"
                   )}
@@ -172,7 +174,8 @@ export function PayoutTable({
                   {date(row.last_disbursed_on)}
                 </TableCell>
               </TableRow>
-            ))
+              );
+            })
           )}
         </TableBody>
       </Table>
@@ -223,5 +226,40 @@ function InvoiceCell({ row }: { row: Row }) {
       {row.invoice_amount && <span className={SUB}>{inr(row.invoice_amount)}</span>}
       {due && <span className={SUB}>due {date(due)}</span>}
     </div>
+  );
+}
+
+// Avatar + name; a link to the lead page (new tab) when `href` is given.
+function StudentName({ name, href }: { name: string; href?: string }) {
+  const body = (
+    <>
+      <span
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+          avatarFor(name),
+        )}
+      >
+        {initials(name)}
+      </span>
+      <span
+        className={cn(
+          "font-medium text-slate-900",
+          href && "group-hover:text-primary group-hover:underline",
+        )}
+      >
+        {name}
+      </span>
+    </>
+  );
+  return href ? (
+    <a
+      href={href}
+      {...NEW_TAB}
+      className="group flex items-center gap-2.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {body}
+    </a>
+  ) : (
+    <div className="flex items-center gap-2.5">{body}</div>
   );
 }

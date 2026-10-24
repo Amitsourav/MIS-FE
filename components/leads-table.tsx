@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { avatarFor, initials } from "@/lib/avatar";
 import type { StageTone } from "@/lib/stage-colors";
 import { date, inr } from "@/lib/format";
-import { leadHref, markOpenedFromList } from "@/lib/lead-nav";
+import { NEW_TAB, leadHref, openLeadRow } from "@/lib/lead-nav";
 import type { LeadLender, LeadLenderStatus, LeadOut } from "@/lib/types";
 
 const COLS = 8;
@@ -94,21 +93,7 @@ export function LeadsTable({
   stageTone: (lead: LeadOut) => StageTone;
   unreadIds?: Set<string>; // leads with a staff chat reply the partner hasn't opened
 }) {
-  const router = useRouter();
-
-  // The whole row opens the lead. The name is a real <Link>, so ⌘/Ctrl-click and
-  // middle-click on it behave natively; elsewhere on the row we mirror that.
-  function openLead(e: React.MouseEvent, id: string) {
-    if ((e.target as HTMLElement).closest("a, button")) return;
-    if (window.getSelection()?.toString()) return; // selecting text, e.g. a phone no.
-    const href = leadHref(id);
-    if (e.metaKey || e.ctrlKey || e.button === 1) {
-      window.open(href, "_blank", "noopener");
-      return;
-    }
-    markOpenedFromList();
-    router.push(href);
-  }
+  // The whole row opens the lead, always in a new tab. The name is a real link.
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -143,8 +128,8 @@ export function LeadsTable({
               <TableRow
                 key={l.id}
                 className="cursor-pointer even:bg-slate-50/40 hover:bg-blue-50/50"
-                onClick={(e) => openLead(e, l.id)}
-                onAuxClick={(e) => e.button === 1 && openLead(e, l.id)}
+                onClick={(e) => openLeadRow(e, l.id)}
+                onAuxClick={(e) => e.button === 1 && openLeadRow(e, l.id)}
               >
                 <TableCell className="font-semibold tabular-nums text-primary">
                   {l.lead_no != null ? `#${l.lead_no}` : "—"}
@@ -152,9 +137,7 @@ export function LeadsTable({
                 <TableCell>
                   <Link
                     href={leadHref(l.id)}
-                    onClick={(e) => {
-                      if (!e.metaKey && !e.ctrlKey && !e.shiftKey) markOpenedFromList();
-                    }}
+                    {...NEW_TAB}
                     className="group flex items-center gap-2.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {l.full_name ? (

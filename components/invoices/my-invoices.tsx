@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { QueryError } from "@/components/query-error";
 import { SectionTitle } from "@/components/payouts/stat-card";
+import { NEW_TAB, leadHref } from "@/lib/lead-nav";
 import type { Invoice } from "@/lib/types";
 
 const MONEY = "text-right tabular-nums whitespace-nowrap";
@@ -232,7 +233,13 @@ function Lines({ inv }: { inv: Invoice }) {
         <li key={`${l.lead_id ?? "na"}-${i}`} className="flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate">
             {l.lead_no != null && <span className="mr-1.5 font-semibold tabular-nums text-primary">#{l.lead_no}</span>}
-            {l.full_name ?? "—"}
+            {l.lead_id ? (
+              <a href={leadHref(l.lead_id)} {...NEW_TAB} className="hover:text-primary hover:underline">
+                {l.full_name ?? "Open lead"}
+              </a>
+            ) : (
+              (l.full_name ?? "—")
+            )}
             <span className="text-muted-foreground"> · {l.bank_name ?? "—"}</span>
           </span>
           <span className="shrink-0 tabular-nums">{inr(l.amount)}</span>

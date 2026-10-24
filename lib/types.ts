@@ -315,6 +315,7 @@ export type InvoiceStatus = "raised" | "paid" | "cancelled";
 export type InvoiceState = "not_raised" | "raised" | "overdue";
 
 export interface PayoutItem {
+  lead_id: string | null; // opens the lead page (partner view)
   lead_no: number | null; // the partner's own lead number
   full_name: string | null;
   bank_name: string | null; // the real bank ("PNB"); null = still on an aggregator → "—"

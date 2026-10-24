@@ -7,6 +7,17 @@ export function leadHref(id: string): string {
   return `/leads/${encodeURIComponent(id)}`;
 }
 
+// Leads always open in a new tab, so the list or Payout page stays where it was.
+export const NEW_TAB = { target: "_blank", rel: "noopener noreferrer" } as const;
+
+/** Row click: open the lead in a new tab, unless the click was on a link or
+ * button inside the row, or the user was selecting text. */
+export function openLeadRow(e: React.MouseEvent, id: string) {
+  if ((e.target as HTMLElement).closest("a, button")) return;
+  if (window.getSelection()?.toString()) return; // selecting text, e.g. a phone no.
+  window.open(leadHref(id), "_blank", "noopener");
+}
+
 export function markOpenedFromList() {
   openedFromList = true;
 }

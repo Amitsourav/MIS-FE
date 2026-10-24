@@ -142,7 +142,12 @@ export function PayoutsPanel({
                 }
               />
             </div>
-            <PayoutTable items={data.items} loading={false} bare />
+            <PayoutTable
+              items={data.items}
+              loading={false}
+              bare
+              leadLinks={viewer === "partner"}
+            />
             <div className="border-t px-4 py-3">
               <Pagination
                 page={page}
